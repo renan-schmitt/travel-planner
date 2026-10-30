@@ -1,0 +1,13 @@
+**/node_modules
+**/target
+**/dist
+**/coverage
+.git
+.github
+.idea
+.vscode
+docs
+infra
+.env
+.env.*
+**/.DS_Store
