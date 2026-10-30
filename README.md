@@ -11,7 +11,7 @@ Requisitos: Docker, Java 21 e Node 22.
 
 ```bash
 cp .env.example .env      # ajuste se precisar
-docker compose up -d      # MySQL 8 em localhost:3307
+./dev.sh                  # MySQL (Docker) + backend (:8082) + frontend (http://localhost:5173)
 ```
 
 Os comandos de backend, frontend e testes estão em [`CLAUDE.md`](CLAUDE.md).

@@ -1,6 +1,7 @@
 package com.travelplanner.shared.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
@@ -24,18 +25,24 @@ class SpaForwardControllerIT extends IntegrationTest {
   }
 
   @ParameterizedTest
-  @ValueSource(
-      strings = {
-        "/api",
-        "/api/v1/inexistente",
-        "/oauth2/authorization/google",
-        "/login/oauth2/code/google",
-        "/actuator/inexistente",
-        "/assets/inexistente.js",
-        "/trips/arquivo.png"
-      })
+  @ValueSource(strings = {"/actuator/inexistente", "/assets/inexistente.js", "/trips/arquivo.png"})
   void doesNotForwardBackendPathsOrFiles(String path) throws Exception {
     mvc.perform(get(path)).andExpect(status().isNotFound()).andExpect(forwardedUrl(null));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/api", "/api/v1/inexistente"})
+  void doesNotForwardApiPaths(String path) throws Exception {
+    mvc.perform(get(path).with(user("ana")))
+        .andExpect(status().isNotFound())
+        .andExpect(forwardedUrl(null));
+  }
+
+  /** O fluxo OAuth é tratado pelos filtros do Spring Security (ver {@code SecurityConfigIT}). */
+  @ParameterizedTest
+  @ValueSource(strings = {"/oauth2/authorization/google", "/login/oauth2/code/google"})
+  void doesNotForwardOAuthPaths(String path) throws Exception {
+    mvc.perform(get(path)).andExpect(status().is3xxRedirection()).andExpect(forwardedUrl(null));
   }
 
   @ParameterizedTest

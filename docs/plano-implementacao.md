@@ -19,7 +19,7 @@
 | 0 | Repositório, ferramentas e `CLAUDE.md` | Fundação | ☑ |
 | 1 | Esqueleto do backend | Fundação | ☑ |
 | 2 | Esqueleto do frontend | Fundação | ☑ |
-| 3 | Autenticação Google | Fundação | ☐ |
+| 3 | Autenticação Google | Fundação | ☑ |
 | 4 | Infraestrutura GCP e deploy contínuo | Fundação | ☐ |
 | 5 | Viagens (CRUD) e autorização | MVP | ☐ |
 | 6 | Viajantes (S1) | MVP | ☐ |
@@ -265,7 +265,7 @@ Em dev, o frontend roda em `:5173`, mas o fluxo OAuth passa pelo backend em `:80
 6. Endpoints `auth/api/MeController`:
    - `GET /api/v1/me` → `{id, email, name, pictureUrl, nationality, homeCity:{name, placeId, countryCode, timezone}, isAdmin}`.
    - `PATCH /api/v1/me` → atualiza `nationality` e cidade de origem (o autocomplete de cidade chega na Fase 7; até lá, campos de texto).
-7. **Admin:** `app.admin-emails` (lista, de `APP_ADMIN_EMAILS`); `isAdmin` = e-mail na lista. Usado na Fase 19.
+7. **Admin:** `app.auth.admin-emails` (lista, de `APP_ADMIN_EMAILS`); `isAdmin` = e-mail na lista. Usado na Fase 19.
 8. **Login de desenvolvimento** (`auth/dev/DevLoginController`, `@Profile("local | test")`):
    - `POST /dev/login?email=...` cria/usa o usuário e autentica a sessão sem Google.
    - Guarda de segurança: um `ApplicationListener` que **falha na inicialização** se o bean existir com o perfil `prod` ativo.
@@ -1398,3 +1398,20 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **401:** o middleware chama um handler configurável (`setUnauthorizedHandler`), que o `main.tsx` liga ao `router.navigate('/login')`.
 - `/dev/ui` é registrada só com `import.meta.env.DEV` (import dinâmico; não entra no build de produção). As devtools do TanStack Query também ficam só em dev, no canto superior esquerdo para não cobrir o menu do usuário.
 - O build avisa que o chunk principal passa de 500 kB (~180 kB gzip). Code splitting por rota fica para quando houver telas reais (Fases 27/29).
+
+### Fase 3
+- **Dependências do Boot 4:** `spring-boot-starter-security-oauth2-client` (o `spring-boot-starter-oauth2-client` antigo está obsoleto) e `spring-boot-starter-session-jdbc`, mais os `-test` correspondentes. `V3__spring_session.sql` é a cópia do `schema-mysql.sql` do `spring-session-jdbc` 4.1.1.
+- **Pacotes:** `auth/domain` (`AppUser`, `AppUserService`, `AppUserPrincipal`, `AppOidcUserService`, `AuthProperties`), `auth/api` (`MeController` + DTOs), `auth/infra` (repositório), `auth/dev` (login dev + guarda). O `SecurityConfig` continua em `shared/security`.
+- **Propriedades:** `app.auth.post-login-redirect`, `app.auth.login-error-redirect` (novo: falha no Google volta para `/login?error`, que mostra um aviso) e `app.auth.admin-emails` (o plano falava em `app.admin-emails`; ficou tudo sob `app.auth`).
+- **Segredos do Google:** o `application.yml` usa `${GOOGLE_CLIENT_ID}` sem padrão (produção não sobe sem eles). O perfil `local` usa um valor provisório, para subir só com o login dev, e importa o `.env` da raiz (`spring.config.import: optional:file:../.env[.properties]`), então não é preciso exportar variáveis.
+- **Redirect OAuth em dev:** o perfil `local` fixa `redirect-uri: http://localhost:8082/login/oauth2/code/google`. Pelo proxy do Vite o backend veria o host `localhost:5173`; com o URI fixo o Google volta direto ao backend, e o cookie de sessão (de `localhost`, sem distinção de porta) vale para o Vite.
+- **`AppUserPrincipal`** estende `DefaultOidcUser` (serializável, vai para a sessão JDBC) e `getName()` devolve o id do usuário, que fica na coluna `PRINCIPAL_NAME` da sessão. O e-mail/nome do Google são atualizados a cada login; `locale` não (fica `pt-BR`). A nacionalidade e a cidade só mudam pelo perfil.
+- **CSRF:** `csrf.spa()` do Spring Security 7 adia o token, então o cookie `XSRF-TOKEN` não era escrito até o primeiro `POST`. Um `CsrfCookieFilter` carrega o token em toda requisição (como na documentação oficial).
+- **Request cache desligado:** depois do login vamos sempre para `post-login-redirect`, e sem o cache um 401 anônimo não cria linha em `SPRING_SESSION`.
+- **Cookie de sessão:** `HttpOnly`, `SameSite=Lax`, `Max-Age` e timeout de 30 dias (`Secure` em `application-prod.yml`). Com `Max-Age` a sessão sobrevive ao fechamento do navegador no celular; o cookie não é renovado a cada acesso, então o usuário entra de novo a cada 30 dias.
+- **`PATCH /api/v1/me`** substitui nacionalidade e cidade de origem (`homeCity` ausente limpa a cidade) e exige `version` (divergente → 409). Fuso validado com uma constraint `@TimeZoneId` (`shared/validation`). O `GET` devolve também `version`.
+- **Login dev:** `POST /dev/login?email=` cria o usuário com `google_sub = dev:<email>`, troca o id da sessão e grava o contexto; exige CSRF. O `DevLoginGuard` derruba a inicialização se o controller existir com o perfil `prod` (ex.: `prod,local` por engano); testado com `ApplicationContextRunner`.
+- **Testes:** no MockMvc o `spring-security-test` troca o repositório de CSRF por um baseado em sessão, então os cookies (`XSRF-TOKEN`, `SESSION`) são testados por HTTP de verdade em `CookiesOverHttpIT` (`RANDOM_PORT`). `TestUsers` (teste) provisiona o usuário e devolve o `oidcLogin()` com `AppUserPrincipal`, para as próximas fases.
+- **OpenAPI:** `springdoc.default-produces-media-type: application/json`, para o `openapi-fetch` tipar as respostas (o padrão era `*/*`). Métodos nomeados `getMe`/`updateMe`/`devLogin` para dar `operationId` legíveis.
+- **Frontend:** guarda `RequireAuth` (componente) em volta do `AppLayout`, em vez de loader, porque o `QueryClient` vive no React. `useMe()` devolve `null` em 401. O `openapi-fetch` passou a resolver o `fetch` a cada chamada (senão o MSW não intercepta o cliente criado no import). Nacionalidade e país usam um `NativeSelect` (seletor nativo no celular) com nomes do `Intl.DisplayNames` e bandeiras em emoji; a lista de códigos ISO veio do JDK. O formulário dev de login só existe com `import.meta.env.DEV` (não entra no build de produção).
+- **`./dev.sh`** (pedido na validação): sobe MySQL (`docker compose up -d --wait`), backend (`spring-boot:run`, que compila) e Vite com um comando, com logs prefixados (`[api]`/`[web]`). Confere as portas antes (se a porta estiver com uma instância antiga deste projeto, pergunta se pode encerrá-la), instala as dependências do frontend se o `package-lock.json` mudou e encerra os dois processos (incluindo o java do Maven) no Ctrl+C. Para desenvolvimento ficou um script, e não o Docker, para manter o hot reload; a imagem Docker é da Fase 4.

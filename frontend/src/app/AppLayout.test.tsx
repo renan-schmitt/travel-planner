@@ -1,5 +1,7 @@
 import { screen, within } from '@testing-library/react'
+import { loggedOut } from '@/test/handlers'
 import { renderApp } from '@/test/render'
+import { server } from '@/test/server'
 
 // O layout renderiza duas navegações (inferior no celular, lateral no desktop); o CSS esconde
 // uma delas conforme a largura, mas no jsdom as duas existem.
@@ -22,6 +24,7 @@ describe('AppLayout', () => {
 
   it('navega entre as rotas e marca o item ativo', async () => {
     const { user, router } = renderApp('/')
+    await screen.findByRole('heading', { name: 'Início', level: 1 })
 
     await user.click(within(bottomNav()).getByRole('link', { name: 'Viagens' }))
 
@@ -52,6 +55,7 @@ describe('AppLayout', () => {
   })
 
   it('mostra o login fora do layout', async () => {
+    server.use(loggedOut())
     renderApp('/login')
 
     expect(await screen.findByRole('heading', { name: 'Entrar' })).toBeInTheDocument()

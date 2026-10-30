@@ -3,6 +3,9 @@
     "name": "Travel Planner",
     "tagline": "Planeje a viagem em família sem esquecer nada."
   },
+  "common": {
+    "loading": "Carregando…"
+  },
   "nav": {
     "label": "Navegação principal",
     "home": "Início",
@@ -11,7 +14,6 @@
   },
   "userMenu": {
     "open": "Abrir menu do usuário",
-    "guest": "Visitante",
     "profile": "Perfil",
     "theme": "Tema",
     "signOut": "Sair"
@@ -32,12 +34,30 @@
   "profile": {
     "title": "Perfil",
     "appearance": "Aparência",
-    "appearanceHint": "Escolha o tema do aplicativo. \"Sistema\" segue a configuração do seu aparelho."
+    "appearanceHint": "Escolha o tema do aplicativo. \"Sistema\" segue a configuração do seu aparelho.",
+    "personal": "Dados de viagem",
+    "personalHint": "Usados para avisar sobre documentos e transfers. A cidade de origem é o ponto de partida das suas viagens.",
+    "nationality": "Nacionalidade",
+    "homeCity": "Cidade de origem",
+    "homeCityPlaceholder": "Ex.: Porto Alegre",
+    "homeCountry": "País da cidade de origem",
+    "homeCountryEmpty": "Selecione",
+    "homeCountryRequired": "Informe o país da cidade de origem.",
+    "save": "Salvar",
+    "saved": "Perfil salvo.",
+    "saveError": "Não foi possível salvar o perfil. Tente novamente.",
+    "conflict": "Seu perfil foi alterado em outro lugar. Recarregamos os dados; confira e salve de novo."
   },
   "login": {
     "title": "Entrar",
     "google": "Entrar com Google",
-    "comingSoon": "O login ainda não está disponível."
+    "error": "Não foi possível entrar com o Google. Tente novamente.",
+    "devSection": "Desenvolvimento",
+    "devEmail": "E-mail (login dev)",
+    "devEmailPlaceholder": "voce@exemplo.com",
+    "devEmailInvalid": "Informe um e-mail válido.",
+    "devSubmit": "Login dev",
+    "devError": "O login dev falhou. O backend está rodando no perfil local?"
   },
   "notFound": {
     "title": "Página não encontrada",

@@ -3,10 +3,68 @@
  * Do not make direct changes to the file.
  */
 
-export type paths = Record<string, never>
+export interface paths {
+  '/dev/login': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['devLogin']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/me': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['getMe']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch: operations['updateMe']
+    trace?: never
+  }
+}
 export type webhooks = Record<string, never>
 export interface components {
-  schemas: never
+  schemas: {
+    HomeCityDto: {
+      name: string
+      placeId?: string
+      countryCode?: string
+      timezone?: string
+    }
+    UpdateMeRequest: {
+      /** Format: int64 */
+      version: number
+      nationality: string
+      homeCity?: components['schemas']['HomeCityDto']
+    }
+    MeResponse: {
+      /** Format: int64 */
+      id: number
+      email: string
+      name?: string
+      pictureUrl?: string
+      nationality: string
+      homeCity?: components['schemas']['HomeCityDto']
+      isAdmin: boolean
+      /** Format: int64 */
+      version: number
+    }
+  }
   responses: never
   parameters: never
   requestBodies: never
@@ -14,4 +72,69 @@ export interface components {
   pathItems: never
 }
 export type $defs = Record<string, never>
-export type operations = Record<string, never>
+export interface operations {
+  devLogin: {
+    parameters: {
+      query: {
+        email: string
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  getMe: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MeResponse']
+        }
+      }
+    }
+  }
+  updateMe: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMeRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MeResponse']
+        }
+      }
+    }
+  }
+}
