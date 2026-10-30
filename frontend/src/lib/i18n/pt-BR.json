@@ -1,0 +1,97 @@
+{
+  "app": {
+    "name": "Travel Planner",
+    "tagline": "Planeje a viagem em família sem esquecer nada."
+  },
+  "nav": {
+    "label": "Navegação principal",
+    "home": "Início",
+    "trips": "Viagens",
+    "profile": "Perfil"
+  },
+  "userMenu": {
+    "open": "Abrir menu do usuário",
+    "guest": "Visitante",
+    "profile": "Perfil",
+    "theme": "Tema",
+    "signOut": "Sair"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Sistema"
+  },
+  "dashboard": {
+    "title": "Início",
+    "empty": "Suas próximas viagens e pendências vão aparecer aqui."
+  },
+  "trips": {
+    "title": "Viagens",
+    "empty": "Você ainda não tem viagens."
+  },
+  "profile": {
+    "title": "Perfil",
+    "appearance": "Aparência",
+    "appearanceHint": "Escolha o tema do aplicativo. \"Sistema\" segue a configuração do seu aparelho."
+  },
+  "login": {
+    "title": "Entrar",
+    "google": "Entrar com Google",
+    "comingSoon": "O login ainda não está disponível."
+  },
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "O endereço que você abriu não existe ou foi removido.",
+    "back": "Voltar ao início"
+  },
+  "error": {
+    "title": "Algo deu errado",
+    "description": "Tente recarregar a página.",
+    "reload": "Recarregar"
+  },
+  "priceTier": {
+    "label": "Faixa de preço: {{level}} de 4",
+    "estimated": "Estimado",
+    "estimatedLabel": "Faixa de preço estimada: {{level}} de 4"
+  },
+  "severity": {
+    "critical": "Crítico",
+    "warning": "Atenção",
+    "info": "Sugestão",
+    "success": "Concluído"
+  },
+  "devUi": {
+    "title": "Componentes e cores",
+    "description": "Página de desenvolvimento para conferir o visual nos dois temas.",
+    "lightTheme": "Tema claro",
+    "darkTheme": "Tema escuro",
+    "buttons": "Botões",
+    "primary": "Primário",
+    "secondary": "Secundário",
+    "outline": "Contorno",
+    "ghost": "Fantasma",
+    "destructive": "Excluir",
+    "badges": "Badges e severidades",
+    "highlight": "Destaque",
+    "priceTier": "Faixa de preço",
+    "colors": "Cores",
+    "tripColors": "Cores de viagem",
+    "card": "Card de exemplo",
+    "cardDescription": "Cards brancos, cantos arredondados e sombra leve.",
+    "countdown": "Faltam {{count}} dias",
+    "form": "Campo de formulário",
+    "inputLabel": "Destino",
+    "inputPlaceholder": "Ex.: Lisboa",
+    "checkboxLabel": "Passaporte conferido",
+    "openDialog": "Abrir diálogo",
+    "openSheet": "Abrir bottom sheet",
+    "dialogTitle": "Diálogo de exemplo",
+    "dialogDescription": "Diálogos e sheets usam shadow-lg.",
+    "showToast": "Mostrar toast",
+    "toastMessage": "Viagem salva.",
+    "suggestions": "Sugestões",
+    "criticalSuggestion": "Falta o transfer do aeroporto para o hotel em Lisboa.",
+    "warningSuggestion": "O passaporte de Ana vence em 5 dias.",
+    "infoSuggestion": "Que tal reservar o jantar da primeira noite?"
+  }
+}

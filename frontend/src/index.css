@@ -1,0 +1,184 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/plus-jakarta-sans';
+
+/* Identidade visual: ESP §13. */
+
+/*
+ * `dark:` vale dentro de `.dark`, exceto sob um `.light` (usado para forçar o tema claro num trecho,
+ * como na página /dev/ui).
+ */
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Plus Jakarta Sans Variable', var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Tokens próprios (ESP §13.2): destaque e estados. */
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-highlight-soft: var(--highlight-soft);
+  --color-highlight-soft-foreground: var(--highlight-soft-foreground);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-foreground: var(--success-foreground);
+
+  /* Cores decorativas das viagens (ESP §13.7). */
+  --color-trip-1: #0e7c86;
+  --color-trip-2: #e8613f;
+  --color-trip-3: #1d6fb8;
+  --color-trip-4: #7c5cc4;
+  --color-trip-5: #3f8f5a;
+  --color-trip-6: #c2477a;
+
+  /*
+   * ESP §13.6: cards e sheets com --radius (rounded-xl); botões e campos com
+   * --radius - 4px (rounded-lg, usado pelos componentes do shadcn).
+   */
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 6px);
+  --radius-lg: calc(var(--radius) - 4px);
+  --radius-xl: var(--radius);
+  --radius-2xl: calc(var(--radius) + 4px);
+  --radius-3xl: calc(var(--radius) + 8px);
+  --radius-4xl: calc(var(--radius) + 12px);
+}
+
+:root,
+.light {
+  --radius: 0.875rem;
+
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0e7c86;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e6f4f5;
+  --accent-foreground: #0b5f67;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0e7c86;
+
+  /* Coral: nunca com texto branco (2,6:1). */
+  --highlight: #ff7a59;
+  --highlight-foreground: #1f2937;
+  --highlight-soft: #ffe8e1;
+  --highlight-soft-foreground: #b23a1e;
+  --warning: #b45309;
+  --warning-soft: #fef3c7;
+  --warning-foreground: #b45309;
+  --info: #2563eb;
+  --info-soft: #dbeafe;
+  --info-foreground: #2563eb;
+  --success: #15803d;
+  --success-soft: #dcfce7;
+  --success-foreground: #15803d;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --popover: #1e293b;
+  --popover-foreground: #f1f5f9;
+  --primary: #2db3bd;
+  --primary-foreground: #042f33;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #12343a;
+  --accent-foreground: #a5e3e8;
+  --destructive: #f87171;
+  --border: #334155;
+  --input: #334155;
+  --ring: #2db3bd;
+
+  --highlight: #ff8a6b;
+  --highlight-foreground: #1f2937;
+  /* A ESP não define o badge suave no escuro: derivado do coral com transparência. */
+  --highlight-soft: rgb(255 138 107 / 0.16);
+  --highlight-soft-foreground: #ff8a6b;
+  --warning: #fbbf24;
+  --warning-soft: #422006;
+  --warning-foreground: #fbbf24;
+  --info: #60a5fa;
+  --info-soft: #172554;
+  --info-foreground: #60a5fa;
+  --success: #4ade80;
+  --success-soft: #052e16;
+  --success-foreground: #4ade80;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-base text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading tracking-tight;
+  }
+  /* ESP §13.1: animações de 150–200 ms, respeitando prefers-reduced-motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
