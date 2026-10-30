@@ -14,11 +14,32 @@ spring:
           time_zone: UTC
   flyway:
     locations: classpath:db/migration
+  session:
+    jdbc:
+      # As tabelas vêm da migration V3 (Flyway).
+      initialize-schema: never
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            # Sem valor padrão: em produção a aplicação não sobe sem os segredos.
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid,email,profile
 
 server:
   port: ${PORT:8080}
   # Cloud Run fica atrás de um proxy HTTPS (necessário para os redirects do OAuth).
   forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 30d
+      cookie:
+        http-only: true
+        same-site: lax
+        # Sobrevive ao fechamento do navegador (celular); `secure` fica no perfil prod.
+        max-age: 30d
 
 management:
   endpoints:
@@ -26,7 +47,15 @@ management:
       exposure:
         include: health
 
+app:
+  auth:
+    post-login-redirect: /
+    login-error-redirect: /login?error
+    # E-mails separados por vírgula.
+    admin-emails: ${APP_ADMIN_EMAILS:}
+
 # OpenAPI só nos perfis local e test.
 springdoc:
   api-docs:
     enabled: false
+  default-produces-media-type: application/json

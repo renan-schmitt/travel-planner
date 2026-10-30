@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { TripsPage } from '@/features/trips/TripsPage'
@@ -24,7 +25,11 @@ export const routes: RouteObject[] = [
       { path: '/login', element: <LoginPage /> },
       ...devRoutes,
       {
-        element: <AppLayout />,
+        element: (
+          <RequireAuth>
+            <AppLayout />
+          </RequireAuth>
+        ),
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'trips', element: <TripsPage /> },
