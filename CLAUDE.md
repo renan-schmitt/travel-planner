@@ -18,6 +18,8 @@ Leia antes de qualquer fase: [`docs/especificacao.md`](docs/especificacao.md) (E
 | Testes frontend | `cd frontend && npm run test -- --run && npm run lint && npm run build` | a partir da Fase 2 |
 | Gerar cliente da API | `cd frontend && npm run gen:api` (backend rodando localmente) | a partir da Fase 2 |
 
+O frontend usa **Node 22** (`frontend/.nvmrc`; rode `nvm use` em `frontend/`) e sobe em `http://localhost:5173`, com proxy de `/api`, `/oauth2`, `/login`, `/logout` e `/dev` para o backend em `:8082`. A página `/dev/ui` (só em dev) mostra os componentes e as cores nos dois temas.
+
 O MySQL local usa a porta **3307** porque a 3306 da máquina de desenvolvimento já está ocupada por outro MySQL. Pelo mesmo motivo, o backend no perfil `local` sobe na porta **8082** (8080/8081 ocupadas; `PORT` sobrescreve): `http://localhost:8082/actuator/health`. Datasource local: `jdbc:mysql://localhost:3307/travel_planner`, usuário/senha `travel`/`travel`.
 
 ## Convenções (resumo)

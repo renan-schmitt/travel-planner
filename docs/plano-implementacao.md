@@ -18,7 +18,7 @@
 |---|---|---|---|
 | 0 | Repositório, ferramentas e `CLAUDE.md` | Fundação | ☑ |
 | 1 | Esqueleto do backend | Fundação | ☑ |
-| 2 | Esqueleto do frontend | Fundação | ☐ |
+| 2 | Esqueleto do frontend | Fundação | ☑ |
 | 3 | Autenticação Google | Fundação | ☐ |
 | 4 | Infraestrutura GCP e deploy contínuo | Fundação | ☐ |
 | 5 | Viagens (CRUD) e autorização | MVP | ☐ |
@@ -223,7 +223,7 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
    - página de desenvolvimento `/dev/ui` (só em dev) mostrando botões, cards, badges de severidade, `PriceTier` e as cores, nos dois temas, para conferir o visual.
 9. Integração com o backend para produção:
    - `npm run build` gera `frontend/dist`;
-   - backend: `shared/web/SpaForwardController` que encaminha para `index.html` qualquer GET que não seja `/api/**`, `/oauth2/**`, `/login/**`, `/actuator/**` nem arquivo com extensão.
+   - backend: `shared/web/SpaForwardController` que encaminha para `index.html` qualquer GET que não seja `/api/**`, `/oauth2/**`, `/login/**` (sub-caminhos: a página `/login` em si é da SPA), `/actuator/**` nem arquivo com extensão.
 10. Testes: Vitest + Testing Library + MSW configurados; um teste do layout renderizando a navegação.
 
 **Aceite:** `npm run dev` mostra o layout responsivo (conferir em 360 px e em desktop); navegação entre rotas funciona; `npm run test -- --run`, `lint` e `build` verdes.
@@ -1386,3 +1386,15 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - `SecurityConfig` provisório em `shared/security` (a Fase 3 substitui). O Boot ainda loga a senha gerada do usuário em memória; some na Fase 3.
 - Testes: `*Test` rodam no Surefire e `*IT` no Failsafe (plugin adicionado ao `pom.xml`), ambos no `./mvnw verify`. `IntegrationTest` usa um container estático `mysql:8.0` com `@ServiceConnection`, iniciado uma vez e compartilhado entre todas as subclasses. O teste do `GlobalExceptionHandler` usa MockMvc standalone (sem contexto Spring).
 - **Lombok e google-java-format** (pedido na validação da fase): Lombok configurado como `annotationProcessorPaths` no compilador e excluído do jar pelo `spring-boot-maven-plugin`; `fmt-maven-plugin` 2.29 com o goal `check` no build. O `.editorconfig` passou a usar 2 espaços para Java, como o google-java-format.
+
+### Fase 2
+- **Node 22 LTS** (`frontend/.nvmrc`). A máquina de desenvolvimento tinha Node 18 como padrão; usar `nvm use` dentro de `frontend/`.
+- **TypeScript 5.9** em vez da versão mais recente: o template atual do Vite traz TypeScript 7 e oxlint, mas o plano pede ESLint, e o `typescript-eslint` só suporta TS < 6.1; o `openapi-typescript` 7 exige TS 5.x. Ferramentas: Vite 8, Vitest 5, ESLint 10 (flat config) + Prettier (com `prettier-plugin-tailwindcss`), React Router 8 (modo data), MSW 3 (a opção `onUnhandledRequest` virou `onUnhandledFrame`).
+- **shadcn/ui** com base Radix, estilo `radix-nova`. Os componentes usam o pacote `cn` (do próprio shadcn) no lugar de `clsx` + `tailwind-merge`. Ajustes locais nos componentes copiados: `button`/`input` com altura de 44 px (ESP §13.1), `badge` com variantes `highlight`/`critical`/`warning`/`info`/`success`, `sonner` usando o tema do app em vez do `next-themes`. Também foram adicionados `tooltip` (usado pelo `PriceTier` estimado) e `separator`.
+- **Raios** (ESP §13.6): `--radius-xl` = `--radius` (cards/sheets) e `--radius-lg` = `--radius - 4px` (botões/campos, que no shadcn usam `rounded-lg`).
+- **Tema:** script inline no `index.html` aplica a classe `dark` antes do primeiro paint (a CSP da Fase 29 precisa liberar esse script por hash). A variante `dark:` ignora trechos sob `.light`, e `.light` redefine os tokens claros, para a `/dev/ui` mostrar os dois temas lado a lado. A ESP não define `--highlight-soft` no escuro: derivado do coral com 16% de opacidade.
+- **Proxy do Vite:** `/login` e `/dev/ui` também são páginas da SPA; um `bypass` serve o `index.html` para `GET` nesses caminhos exatos e encaminha o resto (`/login/oauth2/code/*`, `POST /dev/login`) para o backend.
+- **`SpaForwardController`:** o `PathPatternParser` do Spring 7 só aceita `**` no início ou no fim do padrão, então o mapeamento é `/**/{last:[^.]*}` (caminhos sem extensão) e os prefixos do backend são conferidos no método (404 em `ProblemDetail`). A página `/login` é encaminhada para a SPA; só `/login/**` fica com o backend. Teste em `SpaForwardControllerIT` com um `static/index.html` de teste.
+- **401:** o middleware chama um handler configurável (`setUnauthorizedHandler`), que o `main.tsx` liga ao `router.navigate('/login')`.
+- `/dev/ui` é registrada só com `import.meta.env.DEV` (import dinâmico; não entra no build de produção). As devtools do TanStack Query também ficam só em dev, no canto superior esquerdo para não cobrir o menu do usuário.
+- O build avisa que o chunk principal passa de 500 kB (~180 kB gzip). Code splitting por rota fica para quando houver telas reais (Fases 27/29).
