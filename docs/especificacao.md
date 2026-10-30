@@ -46,7 +46,7 @@ Um sistema web, pensado primeiro para o celular, para planejar viagens em famíl
   | `PRICE_LEVEL_EXPENSIVE` | `$$$` | Caro |
   | `PRICE_LEVEL_VERY_EXPENSIVE` | `$$$$` | Muito caro |
 
-  - O `priceLevel` é frequente em restaurantes, mas **costuma faltar em hotéis**. Fallback em cascata: (1) `priceRange` do Places, quando existir, convertido para a escala; (2) estimativa a partir das estrelas/tipo (pousada vs. resort 5★) e da avaliação; (3) ajuste manual pelo usuário, que fica salvo no favorito.
+  - O `priceLevel` é frequente em restaurantes, mas **costuma faltar em hotéis**. Fallback em cascata: (1) heurística pelo tipo do lugar (hostel/motel = `$`, pousada/B&B = `$$`, resort = `$$$`), marcada como "estimado"; (2) estimativa por IA, sob demanda; (3) ajuste manual pelo usuário, que fica salvo no favorito. O `priceRange` do Places foi descartado por ser raro em hospedagem e difícil de normalizar entre moedas.
   - Sempre exibir como indicativo, com um botão "ver preços" que abre o Booking/Google Hotels já com cidade e datas (link simples, sem integração).
 - **Categorização:** "categoria" (hotel, resort, pousada, apartamento) vem do `primaryType` do Places. Filtros: avaliação mínima, faixa de preço, distância do centro/praia.
 - **Termos de uso:** o Google **não permite guardar o conteúdo** do Places por tempo indefinido. É permitido guardar o `place_id`, então o sistema armazena o `place_id` + dados do usuário (favorito, notas, faixa de preço ajustada) e busca os detalhes sob demanda, com cache curto.
@@ -196,7 +196,7 @@ Roda sempre que a viagem é alterada (e diariamente via cron, para regras de pra
 ### 6.10 Anexos (S7)
 - Upload de PDFs/imagens (reservas, seguro, e-Ticket, vouchers), ligados à viagem e opcionalmente a um trecho, hospedagem ou item de checklist.
 - Limite por arquivo (ex.: 10 MB) e tipos permitidos (PDF, JPG, PNG).
-- Armazenamento no Cloud Storage dentro do nível gratuito (ver §8). Download via URL assinada de curta duração, só para membros da viagem.
+- Armazenamento no Cloud Storage dentro do nível gratuito (ver §8). Download passando pelo backend (mesma origem), só para membros da viagem. Isso permite o cache offline pelo service worker e dispensa a permissão de assinatura de URLs.
 
 ---
 
@@ -221,10 +221,10 @@ flowchart LR
 
 | Camada | Escolha | Alternativa |
 |---|---|---|
-| Backend | Java 21, Spring Boot 3, Spring Web, Spring Security (OAuth2 Client), Spring Data JPA, Flyway | Quarkus (cold start menor) |
+| Backend | Java 21, Spring Boot (última estável, 4.x), Spring Web, Spring Security (OAuth2 Client), Spring Data JPA, Flyway | Quarkus (cold start menor) |
 | Banco | MySQL existente (schema próprio `travel_planner`) | — |
 | Hospedagem | **Cloud Run**, um único container com a API e os estáticos do React. ✅ Decidido (§12) | — |
-| Build / deploy | Imagem gerada por buildpacks (`gcloud run deploy --source .` ou Spring Boot `bootBuildImage`), Artifact Registry com política de limpeza. Começar com JVM normal; imagem nativa GraalVM só se o cold start incomodar | — |
+| Build / deploy | `Dockerfile` multi-stage (build do React → build Maven → JRE), construído no GitHub Actions e enviado ao Artifact Registry (com política de limpeza); deploy com Workload Identity Federation, sem chaves. Começar com JVM normal; imagem nativa GraalVM só se o cold start incomodar | — |
 | Frontend | React + TypeScript + Vite, Tailwind, PWA (Workbox). O build do Vite é copiado para `static/` do Spring Boot e servido pelo mesmo container. ✅ Decidido (§12) | — |
 | IA | Interface `LlmClient` + Gemini API (nível gratuito) | OpenRouter `:free`, ou API paga |
 | Dados de lugares | Google Places API (New) | OSM/Overpass |
@@ -252,7 +252,7 @@ com.travelplanner
 ```
 
 ### 7.4 Pontos de atenção no GCP
-- **Cold start:** com escala a zero, a primeira requisição após um período parado sobe uma instância nova (Spring Boot na JVM: alguns segundos). Mitigações em ordem de custo: (1) *startup CPU boost* e *lazy initialization*; (2) **imagem nativa GraalVM** (Spring Boot 3 suporta; início em < 1 s, build mais lento); (3) `min-instances: 1`, que **sai do nível gratuito** e só deve ser usado se as anteriores não bastarem. Medir no protótipo.
+- **Cold start:** com escala a zero, a primeira requisição após um período parado sobe uma instância nova (Spring Boot na JVM: alguns segundos). Mitigações em ordem de custo: (1) *startup CPU boost* e *lazy initialization*; (2) **imagem nativa GraalVM** (o Spring Boot suporta; início em < 1 s, build mais lento); (3) `min-instances: 1`, que **sai do nível gratuito** e só deve ser usado se as anteriores não bastarem. Medir no protótipo.
 - **Configuração inicial sugerida:** 1 vCPU, 512 MB–1 GB, `max-instances` baixo (ex.: 2) para limitar custo, cobrança por requisição (CPU só durante as requisições).
 - **Região:** a mesma do Cloud SQL, para menor latência.
 - **Conexão Cloud SQL:** usar `com.google.cloud.sql:mysql-socket-factory-connector-j-8` e um pool pequeno (HikariCP, 3–5 conexões), porque o MySQL é compartilhado com outros projetos.
@@ -272,7 +272,7 @@ com.travelplanner
 | **Gemini API** | ✅ Nível gratuito | Limites por minuto e por dia que variam por modelo. Os dados podem ser usados pelo Google no nível gratuito. | Cache dos resultados; não enviar dados sensíveis; o sistema funciona sem IA. |
 | **Cloud Run** | ✅ Nível gratuito mensal | Aproximadamente 2 milhões de requisições, 180 mil vCPU-segundos e 360 mil GiB-segundos por mês, por conta de faturamento. | Escala a zero, cobrança por requisição, `max-instances` baixo, sem `min-instances`. |
 | **Artifact Registry** | ⚠️ 0,5 GB grátis | Imagens do Spring Boot têm ~200–300 MB. | Política de limpeza mantendo só as 1–2 imagens mais recentes. |
-| **Cloud Build** | ✅ Minutos de build gratuitos por mês | Usado pelo `gcloud run deploy --source .`. | Builds de imagem nativa são mais longos; acompanhar o uso. |
+| **GitHub Actions** | ✅ Grátis para repositórios públicos; cota mensal gratuita para privados | Build da imagem e testes rodam no GitHub, sem uso de Cloud Build. | Builds de imagem nativa são mais longos; acompanhar o uso. |
 | **Cloud Scheduler** | ✅ 3 jobs grátis por conta de faturamento | — | Um único job diário para os lembretes. |
 | **Secret Manager** | ✅ Até 6 versões ativas e 10 mil acessos/mês | — | Ler os segredos uma vez na inicialização. |
 | **E-mail / Web Push** | ✅ Grátis | Gmail SMTP ~500/dia; Brevo ~300/dia; Web Push sem custo. | — |
@@ -499,7 +499,7 @@ Observações:
 
 ## 11. Requisitos não funcionais
 - **Mobile-first:** tudo utilizável com uma mão, em telas de 360 px.
-- **Segurança:** autorização por viagem em toda rota (`TripMember`), CSRF, cabeçalhos de segurança, anexos só via URL assinada, sem número de passaporte.
+- **Segurança:** autorização por viagem em toda rota (`TripMember`), CSRF, cabeçalhos de segurança, anexos só via backend com checagem de acesso, sem número de passaporte.
 - **Privacidade:** dados pessoais mínimos; nada sensível enviado à IA do nível gratuito; exclusão de conta apaga as viagens das quais o usuário é dono.
 - **Custo:** alertas de orçamento + quotas diárias nas APIs pagas por uso (§8).
 - **Observabilidade:** Cloud Logging + Error Reporting.
@@ -517,6 +517,90 @@ Observações:
 | 2026-10-30 | **Hospedagem no Cloud Run** (em vez do App Engine Standard), no mesmo projeto GCP e com o Cloud SQL existente | O Spring Boot não cabe bem na instância gratuita do App Engine (F1, ~384 MB) e a cota gratuita lá é compartilhada com outros apps. O Cloud Run escala a zero dentro do nível gratuito, aceita 512 MB–1 GB e permite imagem nativa para resolver o cold start. |
 | 2026-10-30 | **IA inicial: Gemini API no nível gratuito** (AI Studio, modelo da família Flash), atrás da interface `LlmClient` | Custo zero e qualidade suficiente para os usos previstos. Nenhum dado sensível é enviado (só destino, datas, clima e faixa etária). Trocar para Vertex AI ou Claude é só configuração, caso os limites ou a privacidade passem a pesar. |
 | 2026-10-30 | **Base de requisitos de documentos: nacionalidade brasileira, alimentada sob demanda** (seed pequeno + rascunho por IA com revisão humana + revalidação a cada 6 meses) | Os viajantes são brasileiros. Cobrir o mundo todo seria inviável de manter; sob demanda, a base cresce só com os destinos usados e o sistema avisa quando não tem dados, em vez de omitir. |
+| 2026-10-30 | **Identidade visual "Oceano"**: azul-petróleo como primária, coral como destaque, neutros frios (ver §13) | Tem cara de viagem, não colide com as cores de estado (vermelho/âmbar/azul/verde das sugestões) e a primária passa no contraste AA com texto branco. |
 
 ### Em aberto
 Nenhuma no momento.
+
+---
+
+## 13. Identidade visual
+
+Base: **shadcn/ui + Tailwind v4**. As cores são variáveis CSS no padrão do shadcn (`--primary`, `--card`, etc.) e tokens próprios para destaque e estados. Atenção: no shadcn, `--accent` é o fundo sutil de *hover*, não a cor de destaque; o coral fica em `--highlight`.
+
+### 13.1 Estilo
+- Limpo, em cards, mobile-first: fundo claro, cards brancos com cantos arredondados, bastante espaço em branco, sombras leves.
+- Navegação inferior no celular e lateral no desktop; formulários em *bottom sheet*; botão flutuante "+" para a ação principal da tela.
+- Alvos de toque com no mínimo **44 px**; margem lateral de **16 px**; espaçamento entre cards de **12 px**.
+- Animações de 150–200 ms, respeitando `prefers-reduced-motion`.
+
+### 13.2 Cores — tema claro
+
+| Token | Valor | Uso |
+|---|---|---|
+| `--background` | `#F8FAFC` | Fundo da página |
+| `--foreground` | `#0F172A` | Texto principal |
+| `--card` / `--popover` | `#FFFFFF` | Cards, menus |
+| `--card-foreground` | `#0F172A` | Texto em cards |
+| `--muted` / `--secondary` | `#F1F5F9` | Fundos secundários, botões secundários |
+| `--muted-foreground` | `#64748B` | Texto secundário (4,8:1 sobre branco) |
+| `--border` / `--input` | `#E2E8F0` | Bordas, campos |
+| `--primary` / `--ring` | `#0E7C86` | Botões, links, foco (4,9:1 com branco) |
+| `--primary-foreground` | `#FFFFFF` | Texto sobre a primária |
+| `--accent` | `#E6F4F5` | Hover/seleção sutil (padrão shadcn) |
+| `--accent-foreground` | `#0B5F67` | Texto sobre `--accent` |
+| `--highlight` | `#FF7A59` | Destaque: contagem regressiva, badges, ilustrações. **Nunca com texto branco** (2,6:1) |
+| `--highlight-foreground` | `#1F2937` | Texto sobre o coral |
+| `--highlight-soft` / texto | `#FFE8E1` / `#B23A1E` | Badge suave de destaque |
+| `--destructive` | `#DC2626` | Crítico, vencido, excluir (4,8:1 com branco) |
+| `--warning` / `--warning-soft` | `#B45309` / `#FEF3C7` | Atenção, prazo próximo, lacunas na timeline |
+| `--info` / `--info-soft` | `#2563EB` / `#DBEAFE` | Sugestões informativas |
+| `--success` / `--success-soft` | `#15803D` / `#DCFCE7` | Concluído, progresso completo |
+
+### 13.3 Cores — tema escuro
+
+| Token | Valor |
+|---|---|
+| `--background` | `#0F172A` |
+| `--foreground` | `#F1F5F9` |
+| `--card` / `--popover` | `#1E293B` |
+| `--muted` / `--secondary` | `#1E293B` |
+| `--muted-foreground` | `#94A3B8` |
+| `--border` / `--input` | `#334155` |
+| `--primary` / `--ring` | `#2DB3BD` |
+| `--primary-foreground` | `#042F33` |
+| `--accent` / `--accent-foreground` | `#12343A` / `#A5E3E8` |
+| `--highlight` / `--highlight-foreground` | `#FF8A6B` / `#1F2937` |
+| `--destructive` | `#F87171` |
+| `--warning` / `--warning-soft` | `#FBBF24` / `#422006` |
+| `--info` / `--info-soft` | `#60A5FA` / `#172554` |
+| `--success` / `--success-soft` | `#4ADE80` / `#052E16` |
+
+O modo escuro segue o sistema (`prefers-color-scheme`), com opção manual no perfil (claro / escuro / sistema).
+
+### 13.4 Severidades e estados
+
+| Situação | Visual |
+|---|---|
+| Sugestão CRITICAL / item vencido | Borda esquerda e ícone em `--destructive` |
+| Sugestão WARNING / prazo em ≤ 7 dias | `--warning` sobre `--warning-soft` |
+| Sugestão INFO | `--info` sobre `--info-soft` |
+| Item concluído | Check em `--success`, texto riscado em `--muted-foreground` |
+| Noite sem hospedagem (timeline) | Fundo `--warning-soft` com borda tracejada `--warning` |
+
+### 13.5 Tipografia
+- **Inter** (variável) para texto e números (`font-variant-numeric: tabular-nums` em datas, horários e quantidades).
+- **Plus Jakarta Sans** (variável) para títulos.
+- Ambas **auto-hospedadas** via `@fontsource-variable/*` (funcionam offline no PWA e dispensam liberar domínios de fontes na CSP).
+- Escala: corpo **16 px** (evita o zoom automático do iOS em campos), secundário 14 px, títulos 20 / 24 / 28 px.
+
+### 13.6 Forma e elevação
+- `--radius: 0.875rem` (14 px) em cards e sheets; botões e campos com `calc(var(--radius) - 4px)`.
+- Cards com `shadow-sm`; sheets, diálogos e botão flutuante com `shadow-lg`.
+
+### 13.7 Padrões específicos
+- **Faixa de preço:** sempre 4 cifrões, com os ativos em `--foreground` e os restantes em `--border` (ex.: **$$**$$). Faixa estimada: contorno pontilhado e tooltip "estimado".
+- **Cards de viagem:** faixa colorida no topo com a cor da viagem e contagem regressiva em `--highlight`. Cores de viagem (decorativas): `#0E7C86`, `#E8613F`, `#1D6FB8`, `#7C5CC4`, `#3F8F5A`, `#C2477A`.
+- **Timeline:** linha vertical à esquerda, com um ícone por tipo de evento em círculo `--accent`.
+- **Ícones:** `lucide-react`, traço 1,75. Transporte: `Plane`, `TrainFront`, `Bus`, `Car`, `Ship`, `CarTaxiFront`. Países com bandeira em emoji.
+- **Itens gerados por IA:** ícone `Sparkles` em `--highlight`.
