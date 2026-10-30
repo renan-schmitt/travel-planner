@@ -1,0 +1,1 @@
+-- Baseline: valida a configuração do Flyway. As tabelas começam a partir da V2 (Fase 3).

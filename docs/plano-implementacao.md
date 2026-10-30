@@ -17,7 +17,7 @@
 | Fase | Título | Bloco | Status |
 |---|---|---|---|
 | 0 | Repositório, ferramentas e `CLAUDE.md` | Fundação | ☑ |
-| 1 | Esqueleto do backend | Fundação | ☐ |
+| 1 | Esqueleto do backend | Fundação | ☑ |
 | 2 | Esqueleto do frontend | Fundação | ☐ |
 | 3 | Autenticação Google | Fundação | ☐ |
 | 4 | Infraestrutura GCP e deploy contínuo | Fundação | ☐ |
@@ -87,6 +87,8 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
 ### Backend
 
 - **Java 21**, **Spring Boot** na última versão estável (4.x). No Spring Boot 4 a auto-configuração é modularizada: use os starters específicos (ex.: `spring-boot-starter-flyway`) e confira a documentação ao adicionar dependências. Se alguma biblioteca necessária não for compatível, use 3.5.x e registre a decisão.
+- **Lombok** para eliminar boilerplate (getters, loggers via `@Slf4j`, construtores via `@RequiredArgsConstructor`). DTOs continuam sendo `record`; evitar `@Data`/`@EqualsAndHashCode` em entidades JPA.
+- **Formatação:** google-java-format via `fmt-maven-plugin` (`com.spotify.fmt`). O goal `check` roda no build e falha se houver código fora do padrão; corrigir com `./mvnw fmt:format`.
 - **Pacotes por domínio** (ESP §7.3): `auth`, `trip`, `itinerary`, `checklist`, `suggestion`, `packing`, `places`, `requirements`, `ai`, `attachment`, `notification`, `weather`, `shared`. Dentro de cada um: `api` (controllers + DTOs), `domain` (entidades, serviços, regras), `infra` (repositórios, clientes externos), quando o tamanho justificar.
 - **API REST** em `/api/v1/...`. JSON em camelCase. DTOs como `record`. Entidades JPA **nunca** saem do controller.
 - **Validação** com Jakarta Validation nos DTOs de entrada (`@Valid`).
@@ -181,7 +183,7 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
    - `spring.jpa.open-in-view: false`, `spring.jpa.hibernate.ddl-auto: validate`;
    - Hikari `maximum-pool-size: 5`;
    - Actuator expondo só `health`.
-3. `application-local.yml`: datasource `jdbc:mysql://localhost:${MYSQL_PORT:3307}/travel_planner`, usuário `travel`.
+3. `application-local.yml`: `server.port: ${PORT:8082}` (8080/8081 ocupadas na máquina de desenvolvimento); datasource `jdbc:mysql://localhost:${MYSQL_PORT:3307}/travel_planner`, usuário `travel`.
 4. `shared/web/GlobalExceptionHandler` (`@RestControllerAdvice`) produzindo `ProblemDetail` para: `MethodArgumentNotValidException` (400, com lista de campos), `NotFoundException` própria (404), `ForbiddenException` (403), `OptimisticLockingFailureException` (409), genérico (500 sem stack trace).
 5. `shared/time/ClockConfig`: bean `Clock.systemUTC()`.
 6. `shared/persistence/BaseEntity` (`@MappedSuperclass`) com `id`, `createdAt`, `updatedAt`, `version`.
@@ -205,7 +207,7 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
 **Tarefas**
 1. `npm create vite@latest frontend -- --template react-ts`. TypeScript `strict: true`. ESLint + Prettier.
 2. Instalar e configurar: Tailwind v4, shadcn/ui (`button`, `card`, `input`, `label`, `dialog`, `sheet`, `dropdown-menu`, `badge`, `checkbox`, `tabs`, `sonner` para toasts), `lucide-react`, React Router, TanStack Query (+ devtools em dev), `react-hook-form`, `zod`, `@hookform/resolvers`, `date-fns`, `@date-fns/tz`, `react-i18next`, `i18next`, `openapi-fetch`, `openapi-typescript` (dev).
-3. `vite.config.ts`: proxy de `/api`, `/oauth2`, `/login`, `/logout`, `/dev` para `http://localhost:8080`.
+3. `vite.config.ts`: proxy de `/api`, `/oauth2`, `/login`, `/logout`, `/dev` para `http://localhost:8082`.
 4. Layout (`app/AppLayout.tsx`):
    - **Celular:** barra superior com título e menu do usuário; **barra de navegação inferior** com "Início", "Viagens", "Perfil".
    - **Desktop (`lg:`):** navegação lateral.
@@ -236,9 +238,9 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
 
 **Pré-requisito manual (documentar no `CLAUDE.md`):** no Console GCP → APIs e serviços:
 - configurar a **tela de consentimento OAuth** (tipo externo, escopos `openid email profile`, seu e-mail como usuário de teste ou app publicado);
-- criar **ID do cliente OAuth (Aplicativo da Web)** com redirect `http://localhost:8080/login/oauth2/code/google` (o de produção é adicionado na Fase 4).
+- criar **ID do cliente OAuth (Aplicativo da Web)** com redirect `http://localhost:8082/login/oauth2/code/google` (o de produção é adicionado na Fase 4).
 
-Em dev, o frontend roda em `:5173`, mas o fluxo OAuth passa pelo backend em `:8080` via proxy. Configurar o redirect pós-login para `http://localhost:5173/` no perfil `local`.
+Em dev, o frontend roda em `:5173`, mas o fluxo OAuth passa pelo backend em `:8082` via proxy. Configurar o redirect pós-login para `http://localhost:5173/` no perfil `local`.
 
 **Migrations**
 - `V2__app_user.sql` — tabela `app_user`:
@@ -1374,3 +1376,13 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **Porta do MySQL local: 3307** (e não 3306), porque a 3306 da máquina de desenvolvimento já está ocupada por outro container MySQL. O `docker-compose.yml` publica `${MYSQL_PORT:-3307}:3306`; a Fase 1 deve usar `jdbc:mysql://localhost:${MYSQL_PORT:3307}/travel_planner` no `application-local.yml` (já ajustado na tarefa 3 da Fase 1).
 - `docker-compose.yml` ganhou `healthcheck` (`mysqladmin ping`) e `MYSQL_ROOT_PASSWORD=root` (obrigatório na imagem oficial).
 - `.env.example` inclui também as variáveis do Apêndice C que não estavam na lista da Fase 0 (`MYSQL_PORT`, `SPRING_PROFILES_ACTIVE`, `CLOUD_SQL_INSTANCE`, `DB_USERNAME`, `DB_PASSWORD`, `SCHEDULER_SA_EMAIL`).
+
+### Fase 1
+- **Spring Boot 4.1.2** (última estável) com Hibernate 7.4 e **springdoc-openapi 3.2.0** (`springdoc-openapi-starter-webmvc-api`, só o JSON, sem Swagger UI). Projeto gerado pelo Spring Initializr, que já usa os starters modulares do Boot 4 (`spring-boot-starter-webmvc`, `-flyway`, e os `-test` correspondentes).
+- **Porta local: 8082.** A 8080 e a 8081 da máquina de desenvolvimento já estão ocupadas, então o perfil `local` usa `server.port: ${PORT:8082}`; o `application.yml` continua com `${PORT:8080}` (Cloud Run injeta `PORT`). As Fases 2 e 3 foram ajustadas (proxy do Vite e redirect OAuth em `:8082`).
+- OpenAPI desligado por padrão (`springdoc.api-docs.enabled: false`) e ligado em `application-local.yml` e `src/test/resources/application-test.yml`.
+- Exceções e handler ficam em `shared/web` (`NotFoundException`, `ForbiddenException`, `GlobalExceptionHandler`). O handler estende `ResponseEntityExceptionHandler`, então as exceções padrão do Spring MVC (rota inexistente, 405, JSON inválido) também saem como `ProblemDetail`. Erros de validação trazem `errors: [{field, message}]`.
+- Auditoria via Spring Data (`@EnableJpaAuditing` em `shared/persistence/JpaAuditingConfig`) com um `DateTimeProvider` que lê o `Clock` injetado; `createdAt`/`updatedAt` são `Instant` e `hibernate.jdbc.time_zone=UTC`.
+- `SecurityConfig` provisório em `shared/security` (a Fase 3 substitui). O Boot ainda loga a senha gerada do usuário em memória; some na Fase 3.
+- Testes: `*Test` rodam no Surefire e `*IT` no Failsafe (plugin adicionado ao `pom.xml`), ambos no `./mvnw verify`. `IntegrationTest` usa um container estático `mysql:8.0` com `@ServiceConnection`, iniciado uma vez e compartilhado entre todas as subclasses. O teste do `GlobalExceptionHandler` usa MockMvc standalone (sem contexto Spring).
+- **Lombok e google-java-format** (pedido na validação da fase): Lombok configurado como `annotationProcessorPaths` no compilador e excluído do jar pelo `spring-boot-maven-plugin`; `fmt-maven-plugin` 2.29 com o goal `check` no build. O `.editorconfig` passou a usar 2 espaços para Java, como o google-java-format.
