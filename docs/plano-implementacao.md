@@ -20,7 +20,7 @@
 | 1 | Esqueleto do backend | Fundação | ☑ |
 | 2 | Esqueleto do frontend | Fundação | ☑ |
 | 3 | Autenticação Google | Fundação | ☑ |
-| 4 | Infraestrutura GCP e deploy contínuo | Fundação | ☐ |
+| 4 | Infraestrutura GCP e deploy contínuo | Fundação | ☑ |
 | 5 | Viagens (CRUD) e autorização | MVP | ☐ |
 | 6 | Viajantes (S1) | MVP | ☐ |
 | 7 | Cliente Places + paradas com autocomplete de cidade | MVP | ☐ |
@@ -1427,4 +1427,6 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **Dockerfile:** o estágio Maven usa o `mvn` da imagem `maven:3.9` (não o `./mvnw`, que baixaria o Maven de novo) e uma camada de `dependency:go-offline` para cache (o `package` final não pode ser `-o`: plugins resolvem dependências que o `go-offline` não baixa). Usuário `app` (não root). JAR de ~129 MB; imagem de ~450 MB.
 - **Log:** `GcpLogFormatter` escreve uma linha JSON com `time`, `severity` (WARN → `WARNING`), `message` (com a pilha da exceção, para o Error Reporting), `logger`, `thread`.
 - **Testes:** `ProdProfileIT` sobe o perfil `prod` (com `lazy-initialization`) contra o Testcontainers: Flyway aplicado, health `UP`, sem `DevLoginController`, e o `/oauth2/authorization/google` atrás de `X-Forwarded-Proto: https` gera `redirect_uri` `https://...` e cookie `SESSION` com `Secure`. A imagem foi testada localmente no perfil `prod` contra o MySQL do compose (subida em ~10,5 s emulando amd64 num Mac ARM; ~390 MB de RAM).
+- **Cold start medido (2026-10-30, europe-west6, 1 vCPU/1 GiB, CPU boost, lazy init):** primeira requisição depois de 18 min parado (`curl -w '%{time_total}'` em `/actuator/health`, de Portugal) = **12,9 s**; requisições seguintes 0,19–0,28 s. Log do Spring na instância fria: `Started TravelPlannerApplication in 10.402 seconds (process running for 11.216)`; Flyway só validou as 3 migrations (0,06 s). No primeiro deploy (que aplicou as migrations) a subida foi de 20,4 s. Os ~12–13 s de espera no primeiro acesso são o alvo da Fase 30.
+- **Aceite:** deploy automático pelo push na `main` (CI → `deploy.yml`, com *smoke test*), login Google funcionando na URL do Cloud Run, Flyway aplicado no banco de produção, orçamento criado, nenhum segredo no repositório ou nos logs (conferido nos registros do Cloud Logging).
 
