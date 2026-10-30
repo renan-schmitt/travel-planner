@@ -1,0 +1,38 @@
+# Java / Maven
+target/
+*.class
+*.log
+hs_err_pid*
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+.vite/
+
+# Testes E2E
+playwright-report/
+test-results/
+
+# IDEs / editores
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.classpath
+.project
+.settings/
+.factorypath
+*.swp
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Variáveis de ambiente (segredos)
+.env
+.env.*
+!.env.example
