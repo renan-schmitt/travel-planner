@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: travel-planner
+  datasource:
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: ${PORT:8080}
+  # Cloud Run fica atrás de um proxy HTTPS (necessário para os redirects do OAuth).
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+# OpenAPI só nos perfis local e test.
+springdoc:
+  api-docs:
+    enabled: false

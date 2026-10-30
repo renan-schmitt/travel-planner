@@ -8,7 +8,8 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
-[*.{java,kt,xml,sql}]
+# Java segue o google-java-format (2 espaços), aplicado pelo fmt-maven-plugin.
+[*.{kt,xml,sql}]
 indent_size = 4
 
 [*.md]
