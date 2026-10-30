@@ -11,7 +11,7 @@
 #   GITHUB_REPO                       dono/repo que pode fazer deploy (padrão: o remoto `origin`)
 #   GOOGLE_CLIENT_ID/_SECRET          cliente OAuth; se ausentes, lidos do .env da raiz
 #   APP_ADMIN_EMAILS                  administradores (vírgulas); se ausente, lido do .env
-#   BUDGET_AMOUNT                     orçamento mensal (padrão: 1USD)
+#   BUDGET_AMOUNT                     orçamento mensal, na moeda da conta de faturamento (padrão: 1)
 #
 # Pré-requisitos: gcloud autenticado como dono do projeto; `gh` autenticado (opcional, para gravar
 # as variáveis do repositório). Nenhum segredo é impresso.
@@ -23,7 +23,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 : "${SQL_INSTANCE:?defina SQL_INSTANCE}"
 GITHUB_REPO="${GITHUB_REPO:-$(git -C "$ROOT" remote get-url origin | sed -E 's#(.*github\.com[:/])##; s#\.git$##')}"
 SQL_PROJECT_ID="${SQL_PROJECT_ID:-$PROJECT_ID}"
-BUDGET_AMOUNT="${BUDGET_AMOUNT:-1USD}"
+BUDGET_AMOUNT="${BUDGET_AMOUNT:-1}"
 
 SERVICE=travel-planner
 REPOSITORY=travel-planner
@@ -39,7 +39,19 @@ PLACEHOLDER_IMAGE=us-docker.pkg.dev/cloudrun/container/hello
 log() { printf '\033[1;36m[setup]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[setup]\033[0m %s\n' "$*"; }
 
-gcloud config set project "$PROJECT_ID" >/dev/null
+# Contas de serviço recém-criadas demoram alguns segundos para aparecer no IAM.
+retry() {
+  local attempt
+  for attempt in 1 2 3 4 5 6; do
+    "$@" && return
+    warn "Falhou (tentativa $attempt); tentando de novo em 10 s..."
+    sleep 10
+  done
+  "$@"
+}
+
+# Só para este script: não muda o projeto padrão do gcloud.
+export CLOUDSDK_CORE_PROJECT="$PROJECT_ID"
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
 CONNECTION_NAME="$SQL_PROJECT_ID:$REGION:$SQL_INSTANCE"
 # Comandos do Cloud SQL rodam no projeto do banco.
@@ -127,10 +139,10 @@ log "Contas de serviço..."
 ensure_sa "$RUN_SA" "Travel Planner (Cloud Run)"
 ensure_sa "$DEPLOYER_SA" "Travel Planner (deploy pelo GitHub)"
 
-gcloud projects add-iam-policy-binding "$SQL_PROJECT_ID" --condition=None \
+retry gcloud projects add-iam-policy-binding "$SQL_PROJECT_ID" --condition=None \
   --member="serviceAccount:$RUN_SA" --role=roles/cloudsql.client >/dev/null
 for secret in "${APP_SECRETS[@]}"; do
-  gcloud secrets add-iam-policy-binding "$secret" \
+  retry gcloud secrets add-iam-policy-binding "$secret" \
     --member="serviceAccount:$RUN_SA" --role=roles/secretmanager.secretAccessor >/dev/null
 done
 
@@ -179,13 +191,15 @@ if [[ "$SQL_PROJECT_ID" == "$PROJECT_ID" ]]; then
 fi
 BILLING_ACCOUNT="$(gcloud billing projects describe "$PROJECT_ID" --format='value(billingAccountName)')"
 BILLING_ACCOUNT="${BILLING_ACCOUNT#billingAccounts/}"
-log "Orçamento de $BUDGET_AMOUNT/mês (alertas em 50/90/100%)..."
+# O orçamento tem de estar na moeda da conta (ex.: EUR), senão a API responde INVALID_ARGUMENT.
+CURRENCY="$(gcloud billing accounts describe "$BILLING_ACCOUNT" --format='value(currencyCode)')"
+log "Orçamento de $BUDGET_AMOUNT $CURRENCY/mês (alertas em 50/90/100%)..."
 if gcloud billing budgets list --billing-account="$BILLING_ACCOUNT" --format='value(displayName)' |
   grep -qx travel-planner; then
   log "Orçamento travel-planner já existe."
 else
   gcloud billing budgets create --billing-account="$BILLING_ACCOUNT" \
-    --display-name=travel-planner --budget-amount="$BUDGET_AMOUNT" \
+    --display-name=travel-planner --budget-amount="$BUDGET_AMOUNT$CURRENCY" \
     "${BUDGET_FILTER[@]}" \
     --threshold-rule=percent=0.5 --threshold-rule=percent=0.9 --threshold-rule=percent=1.0
 fi
@@ -204,16 +218,16 @@ gcloud iam workload-identity-pools providers describe "$WIF_PROVIDER_ID" --locat
     --attribute-condition="assertion.repository == '$GITHUB_REPO' && assertion.ref == 'refs/heads/main'"
 WIF_PROVIDER="projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$WIF_POOL/providers/$WIF_PROVIDER_ID"
 
-gcloud iam service-accounts add-iam-policy-binding "$DEPLOYER_SA" --role=roles/iam.workloadIdentityUser \
+retry gcloud iam service-accounts add-iam-policy-binding "$DEPLOYER_SA" --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$WIF_POOL/attribute.repository/$GITHUB_REPO" \
   >/dev/null
 # Publicar revisões (sem mexer em IAM), enviar imagens só para este repositório e rodar o serviço
 # com a conta do Cloud Run.
-gcloud projects add-iam-policy-binding "$PROJECT_ID" --condition=None \
+retry gcloud projects add-iam-policy-binding "$PROJECT_ID" --condition=None \
   --member="serviceAccount:$DEPLOYER_SA" --role=roles/run.developer >/dev/null
-gcloud artifacts repositories add-iam-policy-binding "$REPOSITORY" --location="$REGION" \
+retry gcloud artifacts repositories add-iam-policy-binding "$REPOSITORY" --location="$REGION" \
   --member="serviceAccount:$DEPLOYER_SA" --role=roles/artifactregistry.writer >/dev/null
-gcloud iam service-accounts add-iam-policy-binding "$RUN_SA" \
+retry gcloud iam service-accounts add-iam-policy-binding "$RUN_SA" \
   --member="serviceAccount:$DEPLOYER_SA" --role=roles/iam.serviceAccountUser >/dev/null
 
 if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
