@@ -3,3 +3,24 @@ server:
     session:
       cookie:
         secure: true
+
+spring:
+  datasource:
+    # Cloud SQL Java Connector: conexão autenticada pela conta de serviço do Cloud Run (IAM), sem
+    # IP liberado nem proxy. CLOUD_SQL_INSTANCE = PROJETO:REGIAO:INSTANCIA.
+    url: jdbc:mysql:///travel_planner?cloudSqlInstance=${CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.mysql.SocketFactory
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      # A instância do Cloud SQL é compartilhada com outros projetos.
+      maximum-pool-size: 3
+      minimum-idle: 1
+  main:
+    # Reduz o cold start; o Flyway e os filtros de segurança continuam sendo criados na subida.
+    lazy-initialization: true
+
+logging:
+  structured:
+    format:
+      # JSON com `severity`/`message`, que o Cloud Logging entende (o Boot não tem formato GCP).
+      console: com.travelplanner.shared.logging.GcpLogFormatter

@@ -18,6 +18,9 @@ Leia antes de qualquer fase: [`docs/especificacao.md`](docs/especificacao.md) (E
 | Rodar frontend | `cd frontend && npm run dev` | a partir da Fase 2 |
 | Testes frontend | `cd frontend && npm run test -- --run && npm run lint && npm run build` | a partir da Fase 2 |
 | Gerar cliente da API | `cd frontend && npm run gen:api` (backend rodando localmente) | a partir da Fase 2 |
+| Imagem de produção | `docker build -t travel-planner .` (frontend + backend num JAR; no Mac M1+ use `--platform linux/amd64`) | a partir da Fase 4 |
+| Infra GCP (uma vez, ou ao mudar a config do Cloud Run) | `PROJECT_ID=... REGION=... SQL_INSTANCE=... ./infra/setup.sh` | a partir da Fase 4 |
+| Deploy | automático: push na `main` → CI → `deploy.yml`; manual em Actions → Deploy | a partir da Fase 4 |
 
 O frontend usa **Node 22** (`frontend/.nvmrc`; rode `nvm use` em `frontend/`) e sobe em `http://localhost:5173`, com proxy de `/api`, `/oauth2`, `/login`, `/logout` e `/dev` para o backend em `:8082`. A página `/dev/ui` (só em dev) mostra os componentes e as cores nos dois temas.
 
@@ -26,8 +29,9 @@ O frontend usa **Node 22** (`frontend/.nvmrc`; rode `nvm use` em `frontend/`) e 
 - **Login dev (sem Google):** na página `/login` em dev há um campo de e-mail + "Login dev" (`POST /dev/login?email=...`, só nos perfis `local` e `test`). Use para testes manuais, E2E e sessões de IA.
 - **Login com Google:** precisa de `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` no `.env` da raiz (o perfil `local` lê esse arquivo). Pré-requisito manual, no Console GCP → APIs e serviços:
   1. **Tela de consentimento OAuth:** tipo externo, escopos `openid email profile`, seu e-mail como usuário de teste (ou app publicado).
-  2. **Credenciais → ID do cliente OAuth (Aplicativo da Web)** com URI de redirecionamento `http://localhost:8082/login/oauth2/code/google` (o de produção entra na Fase 4).
+  2. **Credenciais → ID do cliente OAuth (Aplicativo da Web)** com URI de redirecionamento `http://localhost:8082/login/oauth2/code/google` e, para produção, `https://<url-do-cloud-run>/login/oauth2/code/google` (o `infra/setup.sh` imprime a URL).
   3. Copie o ID e a chave secreta para o `.env`. Depois do login o Google volta para o backend (`:8082`), que redireciona para o Vite (`http://localhost:5173/`).
+- **Produção:** Cloud Run `travel-planner` (perfil `prod`) com o Cloud SQL via Cloud SQL Java Connector. A configuração do serviço (env vars, segredos, limites) mora no `infra/setup.sh`; o `deploy.yml` só troca a imagem. Segredo novo numa fase: acrescente no script e rode de novo.
 - A sessão fica no MySQL (Spring Session JDBC): sobrevive a restarts do backend. `APP_ADMIN_EMAILS` (vírgulas) define os administradores.
 
 O MySQL local usa a porta **3307** porque a 3306 da máquina de desenvolvimento já está ocupada por outro MySQL. Pelo mesmo motivo, o backend no perfil `local` sobe na porta **8082** (8080/8081 ocupadas; `PORT` sobrescreve): `http://localhost:8082/actuator/health`. Datasource local: `jdbc:mysql://localhost:3307/travel_planner`, usuário/senha `travel`/`travel`.

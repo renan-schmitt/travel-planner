@@ -320,14 +320,14 @@ Em dev, o frontend roda em `:5173`, mas o fluxo OAuth passa pelo backend em `:80
    - `--set-env-vars SPRING_PROFILES_ACTIVE=prod,...`.
 7. Adicionar `https://<url-cloud-run>/login/oauth2/code/google` aos redirects do cliente OAuth.
 8. **Orçamento:** budget de US$ 1 com alertas em 50/90/100% (`gcloud billing budgets create`).
-9. **Deploy pelo GitHub sem chave:** Workload Identity Federation (pool + provider OIDC do GitHub restrito ao repositório) e conta de serviço `github-deployer@...` com `roles/run.admin`, `roles/artifactregistry.writer` e `roles/iam.serviceAccountUser` sobre a conta do Cloud Run.
+9. **Deploy pelo GitHub sem chave:** Workload Identity Federation (pool + provider OIDC do GitHub restrito ao repositório) e conta de serviço `github-deployer@...` com `roles/run.developer` (basta para publicar revisões; ver notas), `roles/artifactregistry.writer` e `roles/iam.serviceAccountUser` sobre a conta do Cloud Run.
 
 **`application-prod.yml`**
 - Datasource via Cloud SQL Java Connector: dependência `com.google.cloud.sql:mysql-socket-factory-connector-j-8`, URL `jdbc:mysql:///travel_planner?cloudSqlInstance=${CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.mysql.SocketFactory`.
 - Hikari `maximum-pool-size: 3`, `minimum-idle: 1`.
 - `spring.main.lazy-initialization: true` (reduz o cold start; validar que nada quebra).
 - Cookies `Secure`; `app.auth.post-login-redirect: /`.
-- Logs em JSON estruturado (Cloud Logging entende): `logging.structured.format.console: gcp` (se disponível na versão; senão logback com encoder JSON).
+- Logs em JSON estruturado (Cloud Logging entende): o Boot 4.1 não tem formato `gcp`, então `logging.structured.format.console` aponta para um formatter próprio (`shared/logging/GcpLogFormatter`).
 
 **GitHub Actions**
 - `ci.yml` (em PR e push):
@@ -1415,3 +1415,15 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **OpenAPI:** `springdoc.default-produces-media-type: application/json`, para o `openapi-fetch` tipar as respostas (o padrão era `*/*`). Métodos nomeados `getMe`/`updateMe`/`devLogin` para dar `operationId` legíveis.
 - **Frontend:** guarda `RequireAuth` (componente) em volta do `AppLayout`, em vez de loader, porque o `QueryClient` vive no React. `useMe()` devolve `null` em 401. O `openapi-fetch` passou a resolver o `fetch` a cada chamada (senão o MSW não intercepta o cliente criado no import). Nacionalidade e país usam um `NativeSelect` (seletor nativo no celular) com nomes do `Intl.DisplayNames` e bandeiras em emoji; a lista de códigos ISO veio do JDK. O formulário dev de login só existe com `import.meta.env.DEV` (não entra no build de produção).
 - **`./dev.sh`** (pedido na validação): sobe MySQL (`docker compose up -d --wait`), backend (`spring-boot:run`, que compila) e Vite com um comando, com logs prefixados (`[api]`/`[web]`). Confere as portas antes (se a porta estiver com uma instância antiga deste projeto, pergunta se pode encerrá-la), instala as dependências do frontend se o `package-lock.json` mudou e encerra os dois processos (incluindo o java do Maven) no Ctrl+C. Para desenvolvimento ficou um script, e não o Docker, para manter o hot reload; a imagem Docker é da Fase 4.
+
+### Fase 4
+- **Projeto e banco:** o Cloud SQL existente é MySQL **8.4** (o connector `mysql-socket-factory-connector-j-8` 1.30.2 funciona igual). Database `travel_planner` e usuário `travel_planner` na mesma instância de outros apps. A região do Cloud Run é a do Cloud SQL. O `setup.sh` aceita o Cloud Run num **projeto próprio** (`SQL_PROJECT_ID` = projeto do banco): a conta do Cloud Run recebe `cloudsql.client` no projeto do banco, e o orçamento passa a cobrir o projeto inteiro, sem filtro por serviço.
+- **Permissões do usuário do banco:** o `gcloud sql users create` dá o papel `cloudsqlsuperuser` e não há como rodar SQL pelo `gcloud`; o `setup.sh` imprime o `REVOKE`/`GRANT` para rodar uma vez como root no Cloud SQL Studio. A senha é gerada pelo script, fica só no segredo `db-password` e é reaplicada no usuário a cada execução. `DB_USERNAME` é env var comum (não segredo).
+- **Config do Cloud Run no `setup.sh`:** o primeiro deploy usa a imagem `cloudrun/container/hello` (só para ter a URL); rodadas seguintes fazem `services update`, sem trocar a imagem. O `deploy.yml` só troca a imagem; env vars, segredos, conta de serviço, Cloud SQL e limites persistem entre revisões. Fases futuras acrescentam env vars/segredos no script.
+- **`deploy.yml`** dispara por `workflow_run` quando o CI termina com sucesso num push na `main` (e por `workflow_dispatch`), faz checkout do `head_sha` do CI, build com cache do GitHub Actions (buildx `type=gha`), deploy e um *smoke test* em `/actuator/health`.
+- **WIF:** provider OIDC restrito a `assertion.repository == '<repo>' && assertion.ref == 'refs/heads/main'` (PRs não conseguem credencial). O deployer tem `roles/run.developer` no projeto (no lugar de `run.admin`: o deploy não mexe em IAM), `artifactregistry.writer` só no repositório e `iam.serviceAccountUser` só na conta do Cloud Run. O `allUsers → run.invoker` é aplicado pelo `setup.sh`. As variáveis do repositório são gravadas pelo script via `gh`.
+- **Orçamento:** US$ 1 com alertas em 50/90/100%, filtrado pelo projeto **e** pelos serviços do app (Cloud Run, Artifact Registry, Secret Manager, Places API/New, Cloud Scheduler; IDs do catálogo do Cloud Billing no script), porque o projeto tem outros custos (o Cloud SQL, outros apps). Cloud Storage fica de fora pelo mesmo motivo; reavaliar na Fase 22.
+- **Dockerfile:** o estágio Maven usa o `mvn` da imagem `maven:3.9` (não o `./mvnw`, que baixaria o Maven de novo) e uma camada de `dependency:go-offline` para cache (o `package` final não pode ser `-o`: plugins resolvem dependências que o `go-offline` não baixa). Usuário `app` (não root). JAR de ~129 MB; imagem de ~450 MB.
+- **Log:** `GcpLogFormatter` escreve uma linha JSON com `time`, `severity` (WARN → `WARNING`), `message` (com a pilha da exceção, para o Error Reporting), `logger`, `thread`.
+- **Testes:** `ProdProfileIT` sobe o perfil `prod` (com `lazy-initialization`) contra o Testcontainers: Flyway aplicado, health `UP`, sem `DevLoginController`, e o `/oauth2/authorization/google` atrás de `X-Forwarded-Proto: https` gera `redirect_uri` `https://...` e cookie `SESSION` com `Secure`. A imagem foi testada localmente no perfil `prod` contra o MySQL do compose (subida em ~10,5 s emulando amd64 num Mac ARM; ~390 MB de RAM).
+
