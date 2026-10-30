@@ -16,7 +16,7 @@
 
 | Fase | Título | Bloco | Status |
 |---|---|---|---|
-| 0 | Repositório, ferramentas e `CLAUDE.md` | Fundação | ☐ |
+| 0 | Repositório, ferramentas e `CLAUDE.md` | Fundação | ☑ |
 | 1 | Esqueleto do backend | Fundação | ☐ |
 | 2 | Esqueleto do frontend | Fundação | ☐ |
 | 3 | Autenticação Google | Fundação | ☐ |
@@ -151,7 +151,7 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
 2. `.gitignore` cobrindo Java/Maven (`target/`), Node (`node_modules/`, `dist/`), IDEs, `.env*` (exceto `.env.example`).
 3. `.editorconfig` (UTF-8, LF, 4 espaços Java, 2 espaços TS/JSON/YAML).
 4. `docker-compose.yml` com MySQL 8.0:
-   - banco `travel_planner`, usuário `travel`/`travel`, porta `3306`, volume nomeado;
+   - banco `travel_planner`, usuário `travel`/`travel`, porta `3307` no host (`${MYSQL_PORT:-3307}:3306`; a 3306 local já está ocupada), volume nomeado;
    - `command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci`.
 5. `.env.example` listando todas as variáveis de ambiente previstas (preencher ao longo das fases): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `PLACES_API_KEY`, `GEMINI_API_KEY`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `GCS_BUCKET`, `APP_ADMIN_EMAILS`.
 6. `README.md` curto: o que é, como rodar localmente (aponta para `CLAUDE.md`).
@@ -181,7 +181,7 @@ Valem para todas as fases. Na dúvida, siga o que já existe no código.
    - `spring.jpa.open-in-view: false`, `spring.jpa.hibernate.ddl-auto: validate`;
    - Hikari `maximum-pool-size: 5`;
    - Actuator expondo só `health`.
-3. `application-local.yml`: datasource `jdbc:mysql://localhost:3306/travel_planner`, usuário `travel`.
+3. `application-local.yml`: datasource `jdbc:mysql://localhost:${MYSQL_PORT:3307}/travel_planner`, usuário `travel`.
 4. `shared/web/GlobalExceptionHandler` (`@RestControllerAdvice`) produzindo `ProblemDetail` para: `MethodArgumentNotValidException` (400, com lista de campos), `NotFoundException` própria (404), `ForbiddenException` (403), `OptimisticLockingFailureException` (409), genérico (500 sem stack trace).
 5. `shared/time/ClockConfig`: bean `Clock.systemUTC()`.
 6. `shared/persistence/BaseEntity` (`@MappedSuperclass`) com `id`, `createdAt`, `updatedAt`, `version`.
@@ -1370,4 +1370,7 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 
 > Registrar aqui, por fase, desvios do plano, decisões tomadas durante a implementação e medições (ex.: cold start da Fase 4).
 
-- _(vazio)_
+### Fase 0
+- **Porta do MySQL local: 3307** (e não 3306), porque a 3306 da máquina de desenvolvimento já está ocupada por outro container MySQL. O `docker-compose.yml` publica `${MYSQL_PORT:-3307}:3306`; a Fase 1 deve usar `jdbc:mysql://localhost:${MYSQL_PORT:3307}/travel_planner` no `application-local.yml` (já ajustado na tarefa 3 da Fase 1).
+- `docker-compose.yml` ganhou `healthcheck` (`mysqladmin ping`) e `MYSQL_ROOT_PASSWORD=root` (obrigatório na imagem oficial).
+- `.env.example` inclui também as variáveis do Apêndice C que não estavam na lista da Fase 0 (`MYSQL_PORT`, `SPRING_PROFILES_ACTIVE`, `CLOUD_SQL_INSTANCE`, `DB_USERNAME`, `DB_PASSWORD`, `SCHEDULER_SA_EMAIL`).

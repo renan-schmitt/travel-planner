@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: travel-planner-mysql
+    environment:
+      MYSQL_DATABASE: travel_planner
+      MYSQL_USER: travel
+      MYSQL_PASSWORD: travel
+      MYSQL_ROOT_PASSWORD: root
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      # 3306 costuma estar ocupada por outro MySQL local; sobrescreva com MYSQL_PORT se preciso.
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-utravel", "-ptravel"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql-data:
