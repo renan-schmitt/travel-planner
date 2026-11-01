@@ -3,6 +3,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
+import { TravelersPage } from '@/features/travelers/TravelersPage'
 import { EditTripPage, NewTripPage } from '@/features/trips/TripFormPages'
 import { TripPage } from '@/features/trips/TripPage'
 import { TripsPage } from '@/features/trips/TripsPage'
@@ -39,6 +40,7 @@ export const routes: RouteObject[] = [
           { path: 'trips/:tripId', element: <TripPage /> },
           { path: 'trips/:tripId/edit', element: <EditTripPage /> },
           { path: 'profile', element: <ProfilePage /> },
+          { path: 'profile/travelers', element: <TravelersPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
