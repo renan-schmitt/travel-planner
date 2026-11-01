@@ -20,6 +20,38 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/travelers': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listTripTravelers']
+    put: operations['setTripTravelers']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/travelers/{travelerId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateTraveler']
+    post?: never
+    delete: operations['deleteTraveler']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/dev/login': {
     parameters: {
       query?: never
@@ -46,6 +78,22 @@ export interface paths {
     get: operations['listTrips']
     put?: never
     post: operations['createTrip']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/travelers': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listTravelers']
+    put?: never
+    post: operations['createTraveler']
     delete?: never
     options?: never
     head?: never
@@ -102,6 +150,37 @@ export interface components {
       /** Format: int64 */
       version: number
     }
+    SetTripTravelersRequest: {
+      travelerIds: number[]
+    }
+    TravelerResponse: {
+      /** Format: int64 */
+      id: number
+      name: string
+      /** @enum {string} */
+      ageGroup: 'BABY' | 'CHILD' | 'TEEN' | 'ADULT'
+      /** Format: int32 */
+      birthYear?: number
+      nationalities: string[]
+      /** Format: date */
+      passportExpiry?: string
+      me: boolean
+      mine: boolean
+      /** Format: int64 */
+      version: number
+    }
+    UpdateTravelerRequest: {
+      /** Format: int64 */
+      version: number
+      name: string
+      /** @enum {string} */
+      ageGroup: 'BABY' | 'CHILD' | 'TEEN' | 'ADULT'
+      /** Format: int32 */
+      birthYear?: number
+      nationalities: string[]
+      /** Format: date */
+      passportExpiry?: string
+    }
     CreateTripRequest: {
       name: string
       /** Format: date */
@@ -111,6 +190,16 @@ export interface components {
       /** @enum {string} */
       status: 'PLANNING' | 'CONFIRMED'
       coverColor?: string
+    }
+    TravelerRequest: {
+      name: string
+      /** @enum {string} */
+      ageGroup: 'BABY' | 'CHILD' | 'TEEN' | 'ADULT'
+      /** Format: int32 */
+      birthYear?: number
+      nationalities: string[]
+      /** Format: date */
+      passportExpiry?: string
     }
     HomeCityDto: {
       name: string
@@ -229,6 +318,100 @@ export interface operations {
       }
     }
   }
+  listTripTravelers: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TravelerResponse'][]
+        }
+      }
+    }
+  }
+  setTripTravelers: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTripTravelersRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TravelerResponse'][]
+        }
+      }
+    }
+  }
+  updateTraveler: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        travelerId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTravelerRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TravelerResponse']
+        }
+      }
+    }
+  }
+  deleteTraveler: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        travelerId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   devLogin: {
     parameters: {
       query: {
@@ -291,6 +474,50 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['TripResponse']
+        }
+      }
+    }
+  }
+  listTravelers: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TravelerResponse'][]
+        }
+      }
+    }
+  }
+  createTraveler: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TravelerRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TravelerResponse']
         }
       }
     }

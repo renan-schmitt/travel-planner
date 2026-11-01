@@ -70,7 +70,9 @@
     "save": "Salvar",
     "saved": "Perfil salvo.",
     "saveError": "Não foi possível salvar o perfil. Tente novamente.",
-    "conflict": "Seu perfil foi alterado em outro lugar. Recarregamos os dados; confira e salve de novo."
+    "conflict": "Seu perfil foi alterado em outro lugar. Recarregamos os dados; confira e salve de novo.",
+    "travelers": "Viajantes",
+    "travelersHint": "Quem viaja com você: família, amigos. Cadastre uma vez e use em todas as viagens."
   },
   "login": {
     "title": "Entrar",
@@ -181,5 +183,62 @@
       "attachments": "Anexos",
       "people": "Pessoas"
     }
+  },
+  "travelers": {
+    "title": "Viajantes",
+    "hint": "Cadastre quem costuma viajar com você. Em cada viagem, marque quem vai na aba \"Pessoas\".",
+    "new": "Novo",
+    "you": "Você",
+    "loadError": "Não foi possível carregar os viajantes. Tente recarregar a página.",
+    "ageGroup": {
+      "BABY": "Bebê",
+      "CHILD": "Criança",
+      "TEEN": "Adolescente",
+      "ADULT": "Adulto"
+    },
+    "passport": {
+      "expired": "Passaporte vencido em {{date}}.",
+      "expiringSoon": "Passaporte vence em {{date}}, em menos de 6 meses."
+    }
+  },
+  "travelerForm": {
+    "newTitle": "Novo viajante",
+    "editTitle": "Editar viajante",
+    "description": "Não guardamos o número do passaporte, só a validade.",
+    "name": "Nome",
+    "nameRequired": "Informe o nome.",
+    "nameTooLong": "Use no máximo 120 caracteres.",
+    "ageGroup": "Faixa etária",
+    "birthYear": "Ano de nascimento",
+    "optional": "Opcional",
+    "birthYearInvalid": "Informe um ano com 4 dígitos, de 1900 até o ano atual.",
+    "nationalities": "Nacionalidades",
+    "addNationality": "Adicionar nacionalidade",
+    "removeNationality": "Remover {{name}}",
+    "nationalityRequired": "Informe ao menos uma nacionalidade.",
+    "passportExpiry": "Validade do passaporte",
+    "passportHint": "Opcional. Muitos países exigem 6 meses de validade além da viagem.",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "created": "Viajante cadastrado.",
+    "saved": "Viajante salvo.",
+    "saveError": "Não foi possível salvar o viajante. Tente novamente.",
+    "conflict": "O viajante foi alterado em outro lugar. Recarregamos os dados; confira e salve de novo.",
+    "deleteTitle": "Excluir \"{{name}}\"?",
+    "deleteDescription": "O viajante sai também das viagens em que estava. Não dá para desfazer.",
+    "deleteConfirm": "Excluir viajante",
+    "deleted": "Viajante excluído.",
+    "deleteError": "Não foi possível excluir o viajante. Tente novamente."
+  },
+  "tripPeople": {
+    "title": "Quem vai",
+    "hintEditor": "Marque quem vai nesta viagem. As mudanças são salvas na hora.",
+    "hintViewer": "Pessoas que vão nesta viagem.",
+    "empty": "Ninguém foi marcado ainda.",
+    "loadError": "Não foi possível carregar quem vai.",
+    "saveError": "Não foi possível salvar quem vai. Tente novamente.",
+    "newTraveler": "Novo viajante",
+    "manage": "Gerenciar viajantes"
   }
 }

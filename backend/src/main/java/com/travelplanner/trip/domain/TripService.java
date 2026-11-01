@@ -38,6 +38,7 @@ public class TripService {
   private final TripMemberRepository members;
   private final TripAccessService access;
   private final AppUserService users;
+  private final TravelerService travelers;
   private final ApplicationEventPublisher events;
   private final TimeProperties timeProperties;
   private final Clock clock;
@@ -68,7 +69,7 @@ public class TripService {
     return view(member.getTrip(), member.getRole(), today(userId));
   }
 
-  /** Cria a viagem com o usuário como {@code OWNER}. */
+  /** Cria a viagem com o usuário como {@code OWNER} e o viajante "eu" dele. */
   @Transactional
   public TripView create(long userId, TripDetails details) {
     if (details.coverColor() == null) {
@@ -77,6 +78,7 @@ public class TripService {
     }
     Trip trip = trips.save(new Trip(userId, details));
     members.save(TripMember.of(trip, userId, TripRole.OWNER, clock.instant()));
+    travelers.addSelfToTrip(trip.getId(), userId);
     events.publishEvent(new TripChangedEvent(trip.getId()));
     return view(trip, TripRole.OWNER, today(userId));
   }

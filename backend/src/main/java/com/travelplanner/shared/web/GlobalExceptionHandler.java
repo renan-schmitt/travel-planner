@@ -51,6 +51,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
   }
 
+  @ExceptionHandler(ConflictException.class)
+  ProblemDetail handleConflict(ConflictException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+  }
+
   @ExceptionHandler(OptimisticLockingFailureException.class)
   ProblemDetail handleOptimisticLock(OptimisticLockingFailureException ex) {
     return ProblemDetail.forStatusAndDetail(

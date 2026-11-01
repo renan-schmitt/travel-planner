@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TripPeopleTab } from '@/features/travelers/TripPeopleTab'
 import { hasRole, useDeleteTrip, useTrip, type Trip } from './api'
 import { defaultTripColor } from './trip-colors'
 import { TripDates } from './TripDates'
@@ -81,7 +82,11 @@ export function TripPage() {
         </div>
         {tabs.map(({ key, icon }) => (
           <TabsContent key={key} value={key}>
-            <EmptyState icon={icon} message={t('trip.comingSoon')} />
+            {key === 'people' ? (
+              <TripPeopleTab trip={trip} />
+            ) : (
+              <EmptyState icon={icon} message={t('trip.comingSoon')} />
+            )}
           </TabsContent>
         ))}
       </Tabs>
