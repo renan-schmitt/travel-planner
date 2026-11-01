@@ -21,7 +21,7 @@
 | 2 | Esqueleto do frontend | Fundação | ☑ |
 | 3 | Autenticação Google | Fundação | ☑ |
 | 4 | Infraestrutura GCP e deploy contínuo | Fundação | ☑ |
-| 5 | Viagens (CRUD) e autorização | MVP | ☐ |
+| 5 | Viagens (CRUD) e autorização | MVP | ☑ |
 | 6 | Viajantes (S1) | MVP | ☐ |
 | 7 | Cliente Places + paradas com autocomplete de cidade | MVP | ☐ |
 | 8 | Transporte | MVP | ☐ |
@@ -1430,3 +1430,12 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **Cold start medido (2026-10-30, europe-west6, 1 vCPU/1 GiB, CPU boost, lazy init):** primeira requisição depois de 18 min parado (`curl -w '%{time_total}'` em `/actuator/health`, de Portugal) = **12,9 s**; requisições seguintes 0,19–0,28 s. Log do Spring na instância fria: `Started TravelPlannerApplication in 10.402 seconds (process running for 11.216)`; Flyway só validou as 3 migrations (0,06 s). No primeiro deploy (que aplicou as migrations) a subida foi de 20,4 s. Os ~12–13 s de espera no primeiro acesso são o alvo da Fase 30.
 - **Aceite:** deploy automático pelo push na `main` (CI → `deploy.yml`, com *smoke test*), login Google funcionando na URL do Cloud Run, Flyway aplicado no banco de produção, orçamento criado, nenhum segredo no repositório ou nos logs (conferido nos registros do Cloud Logging).
 
+### Fase 5
+- **Pacote `trip`:** `domain` (`Trip`, `TripMember`, `TripRole`, `TripStatus`, `TripDetails`, `TripAccessService` = bean `tripAccess`, `TripService`, `TripChangedEvent`), `api` (`TripController` + DTOs), `infra` (repositórios). `TripMember` guarda `userId` como coluna simples (sem `@ManyToOne` para `AppUser`), para não acoplar os módulos; a viagem é `@ManyToOne` lazy.
+- **Status efetivo:** `DONE` depois do último dia; `IN_PROGRESS` a partir do primeiro dia (inclusive); antes disso, o gravado. Sem data de fim, a viagem fica `IN_PROGRESS` desde o início e nunca vira `DONE` sozinha. "Hoje" é calculado no fuso da cidade de origem do usuário; enquanto não houver fuso (chega com o autocomplete da Fase 7), vale `app.time.default-zone` (padrão `America/Sao_Paulo`, `shared/time/TimeProperties`).
+- **Escopos da listagem:** `past` = status efetivo `DONE` (da mais recente para a mais antiga); `upcoming` = todas as outras, inclusive sem datas (por início, sem data por último). Escopo inválido → 400.
+- **API:** `CreateTripRequest`/`UpdateTripRequest` (o `PUT` exige `version`) com status `EditableTripStatus` (`PLANNING`/`CONFIRMED`; os calculados dão 400). Datas validadas pela constraint de classe `@DateRange` (`shared/validation`, erro no campo `endDate`), reaproveitável em paradas e hospedagem. O detalhe devolve `status` (efetivo) e `plannedStatus` (gravado, para o formulário). `destinationCount` sai sempre 0 até a Fase 7.
+- **Cor da viagem:** sem `coverColor` na criação, o backend usa a paleta da ESP §13.7 em rodízio (`nº de viagens do dono % 6`); na edição, sem cor mantém a atual. O formulário tem a escolha de cor (6 bolinhas), que o plano não pedia.
+- **Exclusão:** `DELETE` remove a viagem pelo JPA e os membros saem pelo `ON DELETE CASCADE` do banco. O evento `TripChangedEvent` é publicado também na exclusão.
+- **Frontend:** formulários em páginas (`/trips/new`, `/trips/:tripId/edit`) em vez de *bottom sheet*, como o plano sugeria nas rotas. A aba da lista fica na URL (`?scope=past`). A página da viagem tem as 7 abas (rolagem horizontal em 360 px) com "Em breve"; o menu mostra "Editar" para EDITOR+ e "Excluir" (com confirmação) só para OWNER; leitor que abre `/edit` volta para a viagem. Viagem inexistente ou sem acesso (404) mostra um aviso com link para a lista. Período formatado com `Intl.DateTimeFormat#formatRange` (`lib/dates.ts`).
+- **Testes:** `TripStatusTest` e `TripAccessServiceTest` (matriz papel × papel exigido, com Mockito) unitários; `TripControllerIT` cobre CRUD, escopos, isolamento entre usuários (404), VIEWER/EDITOR/OWNER por HTTP (membros inseridos pelo repositório até a Fase 11), 409, validação, CSRF, cascata e o evento (`@RecordApplicationEvents`). No frontend, lista, formulário (criação/edição/validação/409) e página da viagem (papéis, exclusão, 404).

@@ -29,7 +29,31 @@
   },
   "trips": {
     "title": "Viagens",
-    "empty": "Você ainda não tem viagens."
+    "upcoming": "Próximas",
+    "past": "Passadas",
+    "empty": "Você ainda não tem viagens. Toque em \"Nova viagem\" para começar.",
+    "emptyPast": "Nenhuma viagem concluída ainda.",
+    "loadError": "Não foi possível carregar as viagens. Tente recarregar a página.",
+    "new": "Nova viagem",
+    "countdown_one": "Falta {{count}} dia",
+    "countdown_other": "Faltam {{count}} dias",
+    "startsToday": "Começa hoje!",
+    "dates": {
+      "from": "A partir de {{date}}",
+      "until": "Até {{date}}",
+      "none": "Datas a definir"
+    },
+    "status": {
+      "PLANNING": "Planejando",
+      "CONFIRMED": "Confirmada",
+      "IN_PROGRESS": "Em andamento",
+      "DONE": "Concluída"
+    },
+    "role": {
+      "OWNER": "Dono",
+      "EDITOR": "Editor",
+      "VIEWER": "Leitor"
+    }
   },
   "profile": {
     "title": "Perfil",
@@ -113,5 +137,49 @@
     "criticalSuggestion": "Falta o transfer do aeroporto para o hotel em Lisboa.",
     "warningSuggestion": "O passaporte de Ana vence em 5 dias.",
     "infoSuggestion": "Que tal reservar o jantar da primeira noite?"
+  },
+  "tripForm": {
+    "newTitle": "Nova viagem",
+    "editTitle": "Editar viagem",
+    "name": "Nome",
+    "namePlaceholder": "Ex.: Férias em Portugal",
+    "nameRequired": "Informe o nome da viagem.",
+    "nameTooLong": "Use no máximo 120 caracteres.",
+    "startDate": "Início",
+    "endDate": "Fim",
+    "datesHint": "Opcional. Quando houver trechos de transporte, as datas vêm deles.",
+    "endBeforeStart": "O fim deve ser no mesmo dia ou depois do início.",
+    "status": "Status",
+    "color": "Cor",
+    "colorOption": "Cor {{number}}",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "created": "Viagem criada.",
+    "saved": "Viagem salva.",
+    "saveError": "Não foi possível salvar a viagem. Tente novamente.",
+    "conflict": "A viagem foi alterada por outra pessoa. Recarregamos os dados; confira e salve de novo."
+  },
+  "trip": {
+    "menu": "Ações da viagem",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "deleteTitle": "Excluir \"{{name}}\"?",
+    "deleteDescription": "A viagem e tudo o que foi cadastrado nela serão removidos para todas as pessoas. Não dá para desfazer.",
+    "deleteCancel": "Cancelar",
+    "deleteConfirm": "Excluir viagem",
+    "deleted": "Viagem excluída.",
+    "deleteError": "Não foi possível excluir a viagem. Tente novamente.",
+    "notFound": "Viagem não encontrada. Ela pode ter sido excluída ou você não tem acesso.",
+    "backToTrips": "Ver minhas viagens",
+    "comingSoon": "Em breve.",
+    "tabs": {
+      "itinerary": "Roteiro",
+      "timeline": "Timeline",
+      "checklist": "Checklist",
+      "packing": "Mala",
+      "suggestions": "Sugestões",
+      "attachments": "Anexos",
+      "people": "Pessoas"
+    }
   }
 }

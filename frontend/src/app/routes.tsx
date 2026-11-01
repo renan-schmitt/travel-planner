@@ -3,6 +3,8 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
+import { EditTripPage, NewTripPage } from '@/features/trips/TripFormPages'
+import { TripPage } from '@/features/trips/TripPage'
 import { TripsPage } from '@/features/trips/TripsPage'
 import { AppLayout } from './AppLayout'
 import { NotFoundPage } from './NotFoundPage'
@@ -33,6 +35,9 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'trips', element: <TripsPage /> },
+          { path: 'trips/new', element: <NewTripPage /> },
+          { path: 'trips/:tripId', element: <TripPage /> },
+          { path: 'trips/:tripId/edit', element: <EditTripPage /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
