@@ -112,6 +112,19 @@ else
   printf '%s' "$GOOGLE_CLIENT_SECRET" | put_secret google-client-secret
 fi
 APP_SECRETS=(db-password google-client-id google-client-secret)
+SECRETS="DB_PASSWORD=db-password:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest"
+
+# Places (Fase 7): chave criada à mão no console, restrita à "Places API (New)", com quotas diárias.
+# Sem ela o app funciona, mas a cidade é digitada à mão.
+if [[ -n "${PLACES_API_KEY:-}" ]]; then
+  printf '%s' "$PLACES_API_KEY" | put_secret places-api-key
+fi
+if secret_exists places-api-key; then
+  APP_SECRETS+=(places-api-key)
+  SECRETS+=",PLACES_API_KEY=places-api-key:latest"
+else
+  warn "PLACES_API_KEY não informada: a busca de cidades fica desligada (cidade digitada à mão)."
+fi
 
 # --- 3. Banco -----------------------------------------------------------------------------------
 log "Database $DB_NAME e usuário $DB_USER no Cloud SQL $SQL_INSTANCE..."
@@ -158,7 +171,6 @@ gcloud artifacts repositories set-cleanup-policies "$REPOSITORY" --location="$RE
 # A configuração do serviço mora aqui; o deploy do GitHub só troca a imagem. Fases futuras
 # acrescentam env vars e segredos nestas listas e rodam o script de novo.
 ENV_VARS="SPRING_PROFILES_ACTIVE=prod;CLOUD_SQL_INSTANCE=$CONNECTION_NAME;DB_USERNAME=$DB_USER;APP_ADMIN_EMAILS=${APP_ADMIN_EMAILS:-}"
-SECRETS="DB_PASSWORD=db-password:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest"
 RUN_FLAGS=(
   --region="$REGION"
   --service-account="$RUN_SA"

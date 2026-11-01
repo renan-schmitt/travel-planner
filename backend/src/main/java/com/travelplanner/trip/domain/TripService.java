@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -39,6 +40,7 @@ public class TripService {
   private final TripAccessService access;
   private final AppUserService users;
   private final TravelerService travelers;
+  private final TripItinerary itinerary;
   private final ApplicationEventPublisher events;
   private final TimeProperties timeProperties;
   private final Clock clock;
@@ -50,8 +52,17 @@ public class TripService {
   @Transactional(readOnly = true)
   public List<TripView> list(long userId, TripScope scope) {
     LocalDate today = today(userId);
-    return members.findAllWithTripByUserId(userId).stream()
-        .map(m -> view(m.getTrip(), m.getRole(), today))
+    List<TripMember> memberships = members.findAllWithTripByUserId(userId);
+    Map<Long, Integer> destinations =
+        itinerary.countDestinations(memberships.stream().map(m -> m.getTrip().getId()).toList());
+    return memberships.stream()
+        .map(
+            m ->
+                view(
+                    m.getTrip(),
+                    m.getRole(),
+                    today,
+                    destinations.getOrDefault(m.getTrip().getId(), 0)))
         .filter(
             v ->
                 switch (scope) {
@@ -80,7 +91,7 @@ public class TripService {
     members.save(TripMember.of(trip, userId, TripRole.OWNER, clock.instant()));
     travelers.addSelfToTrip(trip.getId(), userId);
     events.publishEvent(new TripChangedEvent(trip.getId()));
-    return view(trip, TripRole.OWNER, today(userId));
+    return view(trip, TripRole.OWNER, today(userId), 0);
   }
 
   /** Atualiza a viagem; {@code version} é a lida pelo cliente (divergente → 409). */
@@ -94,6 +105,7 @@ public class TripService {
     // Sem cor no pedido, mantém a atual.
     trip.update(
         details.coverColor() == null ? details.withCoverColor(trip.getCoverColor()) : details);
+    trip.applyItineraryDates(itinerary.dateSpan(tripId));
     trips.saveAndFlush(trip);
     events.publishEvent(new TripChangedEvent(tripId));
     return view(trip, member.getRole(), today(userId));
@@ -107,8 +119,28 @@ public class TripService {
     events.publishEvent(new TripChangedEvent(tripId));
   }
 
-  private static TripView view(Trip trip, TripRole role, LocalDate today) {
-    return new TripView(trip, role, trip.status(today));
+  /**
+   * Recalcula as datas derivadas do roteiro depois de uma mudança nas paradas. Sem verificação de
+   * acesso: quem chama (o serviço de paradas) já verificou.
+   */
+  @Transactional
+  public void refreshItineraryDates(long tripId) {
+    trips
+        .findById(tripId)
+        .ifPresent(
+            trip -> {
+              trip.applyItineraryDates(itinerary.dateSpan(tripId));
+              trips.saveAndFlush(trip);
+            });
+  }
+
+  private TripView view(Trip trip, TripRole role, LocalDate today) {
+    Map<Long, Integer> counts = itinerary.countDestinations(List.of(trip.getId()));
+    return view(trip, role, today, counts.getOrDefault(trip.getId(), 0));
+  }
+
+  private static TripView view(Trip trip, TripRole role, LocalDate today, int destinations) {
+    return new TripView(trip, role, trip.status(today), destinations);
   }
 
   /** "Hoje" no fuso da cidade de origem do usuário (ou no fuso padrão, se não houver). */

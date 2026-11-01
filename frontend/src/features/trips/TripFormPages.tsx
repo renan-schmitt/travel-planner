@@ -97,11 +97,13 @@ function EditTripForm({ trip }: { trip: Trip }) {
           <TripForm
             initialValues={{
               name: trip.name,
-              startDate: trip.startDate ?? '',
-              endDate: trip.endDate ?? '',
+              // Datas vindas do roteiro não entram no formulário: salvar sem datas mantém o cálculo.
+              startDate: trip.datesFromStops ? '' : (trip.startDate ?? ''),
+              endDate: trip.datesFromStops ? '' : (trip.endDate ?? ''),
               status: trip.plannedStatus,
               coverColor: trip.coverColor ?? defaultTripColor,
             }}
+            datesFromStops={trip.datesFromStops && Boolean(trip.startDate)}
             submitting={updateTrip.isPending}
             onSubmit={onSubmit}
             onCancel={() => void navigate(`/trips/${trip.id}`)}

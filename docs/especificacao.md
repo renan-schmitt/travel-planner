@@ -128,9 +128,9 @@ Orçamento, exportação para calendário (iCal), importação de reservas por e
 - Perfil: nome, foto, idioma, nacionalidade padrão.
 
 ### 6.2 Viagens e viajantes
-- **Viagem:** nome, datas início/fim (derivadas dos trechos ou manuais), capa, status (`planejando`, `confirmada`, `em andamento`, `concluída`).
+- **Viagem:** nome, datas início/fim (manuais, ou derivadas do roteiro quando não informadas: primeira chegada e última saída das paradas), capa, status (`planejando`, `confirmada`, `em andamento`, `concluída`).
 - **Viajantes (S1):** quem vai na viagem, com ou sem conta no sistema. Nome, faixa etária (bebê, criança, adolescente, adulto), nacionalidade(s), validade do passaporte. **Não guardar o número do passaporte.** Um viajante pode ser vinculado a um usuário e reaproveitado em outras viagens.
-- **Destinos (paradas):** cidade (autocomplete do Places → `place_id`, país, lat/lng, fuso), data de chegada/saída. A ordem define o roteiro.
+- **Destinos (paradas):** cidade (autocomplete do Places → `place_id`, país, lat/lng, fuso; digitada à mão com país e fuso se o Places estiver indisponível), data de chegada/saída. A ordem define o roteiro. Duas paradas só podem dividir o dia da troca de cidade.
 - **Transporte:** trechos com tipo (avião, carro, ônibus, trem, barco, transfer), origem, destino, data/hora de partida/chegada, companhia, nº do voo, código da reserva, anexo. Ida, volta e entre cidades.
 - **Hospedagem:** por destino, hotel (`place_id` ou texto livre), check-in/check-out, reserva, regime (só quarto, café, all-inclusive), faixa de preço.
 - **Partilhar:** convite por e-mail. Papéis: `OWNER`, `EDITOR`, `VIEWER`. O convidado entra com Google pelo mesmo e-mail. Link de leitura opcional (token revogável).
@@ -314,6 +314,7 @@ erDiagram
     string name
     date start_date
     date end_date
+    bool dates_manual
     string status
     bigint owner_id FK
   }

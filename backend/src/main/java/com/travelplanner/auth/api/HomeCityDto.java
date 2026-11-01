@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/** Cidade de origem. {@code placeId} e {@code timezone} chegam com o autocomplete (Fase 7). */
+/** Cidade de origem. {@code placeId} e {@code timezone} vêm do autocomplete (opcionais à mão). */
 public record HomeCityDto(
     @NotBlank @Size(max = 255) String name,
     @Size(max = 255) String placeId,

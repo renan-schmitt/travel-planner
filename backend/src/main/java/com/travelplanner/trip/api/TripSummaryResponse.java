@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 /**
  * Item da listagem. {@code status} é o efetivo (inclui {@code IN_PROGRESS}/{@code DONE}); {@code
- * destinationCount} fica 0 até as paradas existirem (Fase 7).
+ * destinationCount} é o número de paradas.
  */
 public record TripSummaryResponse(
     @NotNull Long id,
@@ -31,6 +31,6 @@ public record TripSummaryResponse(
         view.status(),
         trip.getCoverColor(),
         view.role(),
-        0);
+        view.destinationCount());
   }
 }

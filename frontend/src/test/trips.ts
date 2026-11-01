@@ -12,10 +12,12 @@ export const testTrip: Trip = {
   name: 'Férias em Portugal',
   startDate: '2099-07-01',
   endDate: '2099-07-15',
+  datesFromStops: false,
   status: 'CONFIRMED',
   plannedStatus: 'CONFIRMED',
   coverColor: '#7C5CC4',
   role: 'OWNER',
+  destinationCount: 0,
   version: 3,
 }
 
@@ -28,7 +30,7 @@ export function summaryOf(trip: Trip): TripSummary {
     status: trip.status,
     coverColor: trip.coverColor,
     role: trip.role,
-    destinationCount: 0,
+    destinationCount: trip.destinationCount,
   }
 }
 

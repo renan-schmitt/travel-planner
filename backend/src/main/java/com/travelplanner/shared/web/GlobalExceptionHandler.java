@@ -2,6 +2,7 @@ package com.travelplanner.shared.web;
 
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(ConflictException.class)
   ProblemDetail handleConflict(ConflictException ex) {
     return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+  }
+
+  @ExceptionHandler(InvalidRequestException.class)
+  ProblemDetail handleInvalidRequest(InvalidRequestException ex) {
+    ProblemDetail problem =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dados inválidos.");
+    problem.setProperty("errors", List.of(new FieldError(ex.getField(), ex.getMessage())));
+    return problem;
+  }
+
+  @ExceptionHandler(ServiceUnavailableException.class)
+  ProblemDetail handleUnavailable(ServiceUnavailableException ex) {
+    return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+  }
+
+  /** Corrida entre duas gravações (ex.: duas paradas inseridas ao mesmo tempo na mesma posição). */
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
+    log.warn("Violação de integridade: {}", ex.getMostSpecificCause().getMessage());
+    return ProblemDetail.forStatusAndDetail(
+        HttpStatus.CONFLICT, "Os dados mudaram enquanto você editava. Recarregue e tente de novo.");
   }
 
   @ExceptionHandler(OptimisticLockingFailureException.class)
