@@ -1,34 +1,39 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/ui/native-select'
 import { useUpdateMe, type HomeCity, type Me } from '@/features/auth/api'
+import { cityErrorKey } from '@/features/places/city'
+import { CityAutocomplete } from '@/features/places/CityAutocomplete'
 import { ApiError } from '@/lib/api'
 import { countryOptions } from '@/lib/countries'
 
-const profileSchema = z
-  .object({
-    nationality: z.string().length(2),
-    homeCityName: z.string().trim().max(255),
-    homeCountryCode: z.string(),
-  })
-  .refine((v) => !v.homeCityName || v.homeCountryCode, {
-    path: ['homeCountryCode'],
-    message: 'required',
-  })
+const profileSchema = z.object({
+  nationality: z.string().length(2),
+  // Cidade de origem opcional; se houver, precisa do país (o fuso é opcional).
+  homeCity: z
+    .object({
+      name: z.string().trim().max(160, 'cityTooLong'),
+      countryCode: z.string(),
+      timezone: z.string(),
+      placeId: z.string().optional(),
+      lat: z.number().optional(),
+      lng: z.number().optional(),
+    })
+    .refine((c) => !c.name || c.countryCode, { path: ['countryCode'], message: 'countryRequired' }),
+})
 
 type ProfileValues = z.infer<typeof profileSchema>
 
 /**
  * Nacionalidade e cidade de origem, usadas nas regras de viagem internacional e de transfer. A
- * cidade é texto livre até o autocomplete (Fase 7).
+ * cidade vem do autocomplete (com fuso), ou é digitada à mão se o Places estiver indisponível.
  */
 export function ProfileForm({ me }: { me: Me }) {
   const { t, i18n } = useTranslation()
@@ -39,18 +44,21 @@ export function ProfileForm({ me }: { me: Me }) {
     resolver: zodResolver(profileSchema),
     values: {
       nationality: me.nationality,
-      homeCityName: me.homeCity?.name ?? '',
-      homeCountryCode: me.homeCity?.countryCode ?? '',
+      homeCity: {
+        name: me.homeCity?.name ?? '',
+        countryCode: me.homeCity?.countryCode ?? '',
+        timezone: me.homeCity?.timezone ?? '',
+        placeId: me.homeCity?.placeId ?? undefined,
+      },
     },
   })
-  const countryError = form.formState.errors.homeCountryCode
 
   function onSubmit(values: ProfileValues) {
     updateMe.mutate(
       {
         version: me.version,
         nationality: values.nationality,
-        homeCity: toHomeCity(values, me.homeCity),
+        homeCity: toHomeCity(values.homeCity),
       },
       {
         onSuccess: () => toast.success(t('profile.saved')),
@@ -86,35 +94,19 @@ export function ProfileForm({ me }: { me: Me }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="homeCityName">{t('profile.homeCity')}</Label>
-            <Input
-              id="homeCityName"
-              autoComplete="address-level2"
-              placeholder={t('profile.homeCityPlaceholder')}
-              {...form.register('homeCityName')}
+            <Controller
+              control={form.control}
+              name="homeCity"
+              render={({ field }) => (
+                <CityAutocomplete
+                  label={t('profile.homeCity')}
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={cityErrorKey(form.formState.errors.homeCity)}
+                />
+              )}
             />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="homeCountryCode">{t('profile.homeCountry')}</Label>
-            <NativeSelect
-              id="homeCountryCode"
-              aria-invalid={countryError ? true : undefined}
-              aria-describedby={countryError ? 'homeCountryCode-error' : undefined}
-              {...form.register('homeCountryCode')}
-            >
-              <option value="">{t('profile.homeCountryEmpty')}</option>
-              {countries.map(({ code, name, flag }) => (
-                <option key={code} value={code}>
-                  {flag} {name}
-                </option>
-              ))}
-            </NativeSelect>
-            {countryError && (
-              <p id="homeCountryCode-error" className="text-sm text-destructive">
-                {t('profile.homeCountryRequired')}
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">{t('profile.homeCityHint')}</p>
           </div>
 
           <Button type="submit" className="self-end" disabled={updateMe.isPending}>
@@ -126,18 +118,13 @@ export function ProfileForm({ me }: { me: Me }) {
   )
 }
 
-/**
- * Cidade vazia limpa a cidade de origem. `placeId` e `timezone` (que virão do autocomplete) só são
- * mantidos se a cidade não mudou.
- */
-function toHomeCity(values: ProfileValues, current?: HomeCity | null): HomeCity | undefined {
-  if (!values.homeCityName) return undefined
-  const unchanged =
-    current?.name === values.homeCityName && current.countryCode === values.homeCountryCode
+/** Cidade vazia limpa a cidade de origem. */
+function toHomeCity(city: ProfileValues['homeCity']): HomeCity | undefined {
+  if (!city.name.trim()) return undefined
   return {
-    name: values.homeCityName,
-    countryCode: values.homeCountryCode,
-    placeId: unchanged ? current.placeId : undefined,
-    timezone: unchanged ? current.timezone : undefined,
+    name: city.name.trim(),
+    countryCode: city.countryCode,
+    placeId: city.placeId,
+    timezone: city.timezone || undefined,
   }
 }

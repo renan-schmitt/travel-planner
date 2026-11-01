@@ -31,6 +31,7 @@ O frontend usa **Node 22** (`frontend/.nvmrc`; rode `nvm use` em `frontend/`) e 
   1. **Tela de consentimento OAuth:** tipo externo, escopos `openid email profile`, seu e-mail como usuário de teste (ou app publicado).
   2. **Credenciais → ID do cliente OAuth (Aplicativo da Web)** com URI de redirecionamento `http://localhost:8082/login/oauth2/code/google` e, para produção, `https://<url-do-cloud-run>/login/oauth2/code/google` (o `infra/setup.sh` imprime a URL).
   3. Copie o ID e a chave secreta para o `.env`. Depois do login o Google volta para o backend (`:8082`), que redireciona para o Vite (`http://localhost:5173/`).
+- **Busca de cidades (Places):** precisa de `PLACES_API_KEY` no `.env` (chave restrita à "Places API (New)"). Sem ela a busca responde 503 e a cidade é digitada à mão (nome, país e fuso), o que basta para testar.
 - **Produção:** Cloud Run `travel-planner` (perfil `prod`) com o Cloud SQL via Cloud SQL Java Connector. A configuração do serviço (env vars, segredos, limites) mora no `infra/setup.sh`; o `deploy.yml` só troca a imagem. Segredo novo numa fase: acrescente no script e rode de novo.
 - A sessão fica no MySQL (Spring Session JDBC): sobrevive a restarts do backend. `APP_ADMIN_EMAILS` (vírgulas) define os administradores.
 

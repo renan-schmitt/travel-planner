@@ -53,7 +53,9 @@
       "OWNER": "Dono",
       "EDITOR": "Editor",
       "VIEWER": "Leitor"
-    }
+    },
+    "destinations_one": "{{count}} destino",
+    "destinations_other": "{{count}} destinos"
   },
   "profile": {
     "title": "Perfil",
@@ -63,16 +65,13 @@
     "personalHint": "Usados para avisar sobre documentos e transfers. A cidade de origem é o ponto de partida das suas viagens.",
     "nationality": "Nacionalidade",
     "homeCity": "Cidade de origem",
-    "homeCityPlaceholder": "Ex.: Porto Alegre",
-    "homeCountry": "País da cidade de origem",
-    "homeCountryEmpty": "Selecione",
-    "homeCountryRequired": "Informe o país da cidade de origem.",
     "save": "Salvar",
     "saved": "Perfil salvo.",
     "saveError": "Não foi possível salvar o perfil. Tente novamente.",
     "conflict": "Seu perfil foi alterado em outro lugar. Recarregamos os dados; confira e salve de novo.",
     "travelers": "Viajantes",
-    "travelersHint": "Quem viaja com você: família, amigos. Cadastre uma vez e use em todas as viagens."
+    "travelersHint": "Quem viaja com você: família, amigos. Cadastre uma vez e use em todas as viagens.",
+    "homeCityHint": "O fuso da cidade define o \"hoje\" das suas viagens."
   },
   "login": {
     "title": "Entrar",
@@ -149,7 +148,7 @@
     "nameTooLong": "Use no máximo 120 caracteres.",
     "startDate": "Início",
     "endDate": "Fim",
-    "datesHint": "Opcional. Quando houver trechos de transporte, as datas vêm deles.",
+    "datesHint": "Opcional. Sem datas, a viagem vai da primeira chegada à última saída do roteiro.",
     "endBeforeStart": "O fim deve ser no mesmo dia ou depois do início.",
     "status": "Status",
     "color": "Cor",
@@ -159,7 +158,8 @@
     "created": "Viagem criada.",
     "saved": "Viagem salva.",
     "saveError": "Não foi possível salvar a viagem. Tente novamente.",
-    "conflict": "A viagem foi alterada por outra pessoa. Recarregamos os dados; confira e salve de novo."
+    "conflict": "A viagem foi alterada por outra pessoa. Recarregamos os dados; confira e salve de novo.",
+    "datesFromStopsHint": "As datas atuais vêm do roteiro. Preencha só se quiser fixá-las."
   },
   "trip": {
     "menu": "Ações da viagem",
@@ -183,6 +183,71 @@
       "attachments": "Anexos",
       "people": "Pessoas"
     }
+  },
+  "stops": {
+    "title": "Paradas",
+    "hintEditor": "As cidades da viagem, na ordem do roteiro. Toque numa parada para editar.",
+    "hintViewer": "As cidades da viagem, na ordem do roteiro.",
+    "empty": "Nenhuma parada ainda.",
+    "loadError": "Não foi possível carregar o roteiro. Tente recarregar a página.",
+    "add": "Adicionar parada",
+    "editStop": "Editar parada em {{city}}",
+    "moveUp": "Subir {{city}}",
+    "moveDown": "Descer {{city}}",
+    "reorderError": "Não foi possível reordenar. Tente novamente.",
+    "nights_one": "{{count}} noite",
+    "nights_other": "{{count}} noites",
+    "dayTrip": "Bate-volta",
+    "timezone": "Fuso: {{zone}}"
+  },
+  "stopForm": {
+    "newTitle": "Nova parada",
+    "editTitle": "Editar parada",
+    "description": "Cidade e período. O fuso da cidade é usado nos horários da viagem.",
+    "city": "Cidade",
+    "arrivalDate": "Chegada",
+    "departureDate": "Saída",
+    "arrivalRequired": "Informe a data de chegada.",
+    "departureRequired": "Informe a data de saída.",
+    "departureBeforeArrival": "A saída deve ser no mesmo dia ou depois da chegada.",
+    "overlap": "As datas se sobrepõem à parada em {{city}} ({{dates}}). Só o dia da troca de cidade pode ser compartilhado.",
+    "notes": "Observações",
+    "notesTooLong": "Use no máximo 2000 caracteres.",
+    "optional": "Opcional",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "created": "Parada adicionada.",
+    "saved": "Parada salva.",
+    "saveError": "Não foi possível salvar a parada. Tente novamente.",
+    "invalid": "A parada não pôde ser salva: confira as datas.",
+    "conflict": "A parada foi alterada por outra pessoa. Recarregamos os dados; confira e salve de novo.",
+    "deleteTitle": "Excluir a parada em {{city}}?",
+    "deleteDescription": "A parada sai do roteiro. Não dá para desfazer.",
+    "deleteConfirm": "Excluir parada",
+    "deleted": "Parada excluída.",
+    "deleteError": "Não foi possível excluir a parada. Tente novamente."
+  },
+  "city": {
+    "searchPlaceholder": "Buscar cidade",
+    "suggestions": "Cidades encontradas",
+    "minChars": "Digite ao menos {{count}} letras.",
+    "noResults": "Nenhuma cidade encontrada.",
+    "unavailable": "A busca de cidades está indisponível agora.",
+    "unavailableManual": "A busca de cidades está indisponível. Informe a cidade, o país e o fuso.",
+    "detailsError": "Não foi possível carregar a cidade. Tente de novo.",
+    "typeManually": "Digitar a cidade manualmente",
+    "searchAgain": "Buscar a cidade",
+    "change": "Trocar",
+    "edit": "Editar",
+    "name": "Nome da cidade",
+    "country": "País",
+    "timezone": "Fuso horário",
+    "select": "Selecione",
+    "cityRequired": "Informe a cidade.",
+    "cityTooLong": "Use no máximo 160 caracteres.",
+    "countryRequired": "Informe o país da cidade.",
+    "timezoneRequired": "Informe o fuso horário da cidade."
   },
   "travelers": {
     "title": "Viajantes",

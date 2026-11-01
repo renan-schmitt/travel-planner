@@ -36,6 +36,38 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateStop']
+    post?: never
+    delete: operations['deleteStop']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/stops/order': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['reorderStops']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers/{travelerId}': {
     parameters: {
       query?: never
@@ -84,6 +116,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listStops']
+    put?: never
+    post: operations['createStop']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers': {
     parameters: {
       query?: never
@@ -116,6 +164,38 @@ export interface paths {
     patch: operations['updateMe']
     trace?: never
   }
+  '/api/v1/places/cities/{placeId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['getCity']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/places/cities/autocomplete': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['autocompleteCities']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
@@ -140,6 +220,7 @@ export interface components {
       startDate?: string
       /** Format: date */
       endDate?: string
+      datesFromStops: boolean
       /** @enum {string} */
       status: 'PLANNING' | 'CONFIRMED' | 'IN_PROGRESS' | 'DONE'
       /** @enum {string} */
@@ -147,6 +228,8 @@ export interface components {
       coverColor?: string
       /** @enum {string} */
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
+      /** Format: int32 */
+      destinationCount: number
       /** Format: int64 */
       version: number
     }
@@ -169,6 +252,49 @@ export interface components {
       /** Format: int64 */
       version: number
     }
+    UpdateStopRequest: {
+      /** Format: int64 */
+      version: number
+      cityPlaceId?: string
+      cityName: string
+      countryCode: string
+      /** Format: double */
+      lat?: number
+      /** Format: double */
+      lng?: number
+      timezone: string
+      /** Format: date */
+      arrivalDate: string
+      /** Format: date */
+      departureDate: string
+      notes?: string
+    }
+    StopResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: int32 */
+      seq: number
+      cityPlaceId?: string
+      cityName: string
+      countryCode: string
+      /** Format: double */
+      lat?: number
+      /** Format: double */
+      lng?: number
+      timezone: string
+      /** Format: date */
+      arrivalDate: string
+      /** Format: date */
+      departureDate: string
+      /** Format: int32 */
+      nights: number
+      notes?: string
+      /** Format: int64 */
+      version: number
+    }
+    ReorderStopsRequest: {
+      stopIds: number[]
+    }
     UpdateTravelerRequest: {
       /** Format: int64 */
       version: number
@@ -190,6 +316,21 @@ export interface components {
       /** @enum {string} */
       status: 'PLANNING' | 'CONFIRMED'
       coverColor?: string
+    }
+    StopRequest: {
+      cityPlaceId?: string
+      cityName: string
+      countryCode: string
+      /** Format: double */
+      lat?: number
+      /** Format: double */
+      lng?: number
+      timezone: string
+      /** Format: date */
+      arrivalDate: string
+      /** Format: date */
+      departureDate: string
+      notes?: string
     }
     TravelerRequest: {
       name: string
@@ -240,6 +381,21 @@ export interface components {
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
       /** Format: int32 */
       destinationCount: number
+    }
+    CityResponse: {
+      placeId: string
+      name: string
+      countryCode?: string
+      /** Format: double */
+      lat: number
+      /** Format: double */
+      lng: number
+      timezone?: string
+    }
+    CitySuggestionResponse: {
+      placeId: string
+      name: string
+      description?: string
     }
   }
   responses: never
@@ -366,6 +522,80 @@ export interface operations {
       }
     }
   }
+  updateStop: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateStopRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['StopResponse']
+        }
+      }
+    }
+  }
+  deleteStop: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  reorderStops: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderStopsRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['StopResponse'][]
+        }
+      }
+    }
+  }
   updateTraveler: {
     parameters: {
       query?: never
@@ -478,6 +708,54 @@ export interface operations {
       }
     }
   }
+  listStops: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['StopResponse'][]
+        }
+      }
+    }
+  }
+  createStop: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StopRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['StopResponse']
+        }
+      }
+    }
+  }
   listTravelers: {
     parameters: {
       query?: never
@@ -562,6 +840,53 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['MeResponse']
+        }
+      }
+    }
+  }
+  getCity: {
+    parameters: {
+      query?: {
+        session?: string
+      }
+      header?: never
+      path: {
+        placeId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['CityResponse']
+        }
+      }
+    }
+  }
+  autocompleteCities: {
+    parameters: {
+      query: {
+        q: string
+        session?: string
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['CitySuggestionResponse'][]
         }
       }
     }

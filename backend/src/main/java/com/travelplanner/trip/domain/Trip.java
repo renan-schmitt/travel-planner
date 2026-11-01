@@ -29,6 +29,13 @@ public class Trip extends BaseEntity {
   @Column(name = "end_date")
   private LocalDate endDate;
 
+  /**
+   * {@code true} se as datas foram digitadas no formulário; senão, são derivadas das paradas (ver
+   * {@link #applyItineraryDates}).
+   */
+  @Column(name = "dates_manual", nullable = false)
+  private boolean datesManual;
+
   /** Status gravado ({@code PLANNING} ou {@code CONFIRMED}); o exibido vem de {@link #status}. */
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
@@ -49,8 +56,17 @@ public class Trip extends BaseEntity {
     this.name = details.name();
     this.startDate = details.startDate();
     this.endDate = details.endDate();
+    this.datesManual = details.startDate() != null || details.endDate() != null;
     this.plannedStatus = details.status();
     this.coverColor = details.coverColor();
+  }
+
+  /** Sem datas manuais, a viagem vai da primeira chegada à última saída do roteiro. */
+  public void applyItineraryDates(DateSpan span) {
+    if (!datesManual) {
+      this.startDate = span.start();
+      this.endDate = span.end();
+    }
   }
 
   /** Status efetivo em {@code today} (ver {@link TripStatus#effective}). */

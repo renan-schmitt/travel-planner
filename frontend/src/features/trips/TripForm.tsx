@@ -13,11 +13,14 @@ import { tripSchema, type TripFormValues } from './trip-form'
 /** Criação e edição da viagem: nome, datas opcionais (fim ≥ início), status e cor. */
 export function TripForm({
   initialValues,
+  datesFromStops = false,
   submitting,
   onSubmit,
   onCancel,
 }: {
   initialValues: TripFormValues
+  /** As datas atuais vêm do roteiro (os campos começam vazios). */
+  datesFromStops?: boolean
   submitting: boolean
   onSubmit: (values: TripFormValues) => void
   onCancel: () => void
@@ -64,7 +67,9 @@ export function TripForm({
             {...form.register('endDate')}
           />
         </div>
-        <p className="col-span-2 -mt-1 text-sm text-muted-foreground">{t('tripForm.datesHint')}</p>
+        <p className="col-span-2 -mt-1 text-sm text-muted-foreground">
+          {t(datesFromStops ? 'tripForm.datesFromStopsHint' : 'tripForm.datesHint')}
+        </p>
         {errors.endDate && (
           <p id="trip-end-error" className="col-span-2 text-sm text-destructive">
             {t('tripForm.endBeforeStart')}

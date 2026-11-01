@@ -1,4 +1,4 @@
-import { CalendarDays, UsersRound } from 'lucide-react'
+import { CalendarDays, MapPin, UsersRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Card } from '@/components/ui/card'
@@ -29,6 +29,12 @@ export function TripCard({ trip }: { trip: TripSummary }) {
             <CalendarDays className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
             <TripDates startDate={trip.startDate} endDate={trip.endDate} />
           </p>
+          {trip.destinationCount > 0 && (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+              {t('trips.destinations', { count: trip.destinationCount })}
+            </p>
+          )}
           <div className="flex items-center justify-between gap-3 text-sm">
             {days !== undefined && days >= 0 ? (
               <span className="font-heading font-bold text-highlight tabular">

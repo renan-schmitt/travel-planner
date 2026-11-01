@@ -53,6 +53,10 @@ app:
     login-error-redirect: /login?error
     # E-mails separados por vírgula.
     admin-emails: ${APP_ADMIN_EMAILS:}
+  places:
+    # Chave restrita à "Places API (New)". Sem ela, a busca de cidades responde 503 e o usuário
+    # digita a cidade à mão.
+    api-key: ${PLACES_API_KEY:}
 
 # OpenAPI só nos perfis local e test.
 springdoc:
