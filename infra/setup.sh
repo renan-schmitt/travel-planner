@@ -71,6 +71,7 @@ from_dotenv() {
 from_dotenv GOOGLE_CLIENT_ID
 from_dotenv GOOGLE_CLIENT_SECRET
 from_dotenv APP_ADMIN_EMAILS
+from_dotenv PLACES_API_KEY
 
 # --- 1. APIs ------------------------------------------------------------------------------------
 log "Habilitando APIs..."
