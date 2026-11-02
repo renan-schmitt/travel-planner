@@ -2,6 +2,9 @@ package com.travelplanner.auth.domain;
 
 import com.travelplanner.auth.infra.AppUserRepository;
 import com.travelplanner.shared.web.NotFoundException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -19,7 +22,7 @@ public class AppUserService {
   /**
    * Cria o usuário no primeiro login ou atualiza e-mail, nome e foto nos seguintes. A chave é o
    * {@code sub} do Google, que não muda mesmo se o e-mail mudar. A criação publica {@link
-   * UserCreatedEvent}.
+   * UserCreatedEvent}; todo login publica {@link UserLoggedInEvent}.
    */
   @Transactional
   public AppUser upsertFromOidc(OidcUser oidcUser) {
@@ -27,14 +30,18 @@ public class AppUserService {
     if (email == null || email.isBlank()) {
       throw new IllegalArgumentException("O provedor não informou o e-mail do usuário.");
     }
-    return repository
-        .findByGoogleSub(oidcUser.getSubject())
-        .map(
-            user -> {
-              user.updateIdentity(email, oidcUser.getFullName(), oidcUser.getPicture());
-              return user;
-            })
-        .orElseGet(() -> create(oidcUser.getSubject(), email, oidcUser.getFullName(), oidcUser));
+    AppUser appUser =
+        repository
+            .findByGoogleSub(oidcUser.getSubject())
+            .map(
+                user -> {
+                  user.updateIdentity(email, oidcUser.getFullName(), oidcUser.getPicture());
+                  return user;
+                })
+            .orElseGet(
+                () -> create(oidcUser.getSubject(), email, oidcUser.getFullName(), oidcUser));
+    events.publishEvent(new UserLoggedInEvent(appUser.getId(), email));
+    return appUser;
   }
 
   private AppUser create(String sub, String email, String name, OidcUser oidcUser) {
@@ -49,6 +56,18 @@ public class AppUserService {
     return repository
         .findById(userId)
         .orElseThrow(() -> new NotFoundException("Usuário não encontrado."));
+  }
+
+  /** Usuário com o e-mail (sem diferenciar maiúsculas), o mais antigo se houver mais de um. */
+  @Transactional(readOnly = true)
+  public Optional<AppUser> findByEmail(String email) {
+    return repository.findFirstByEmailOrderByIdAsc(email.strip());
+  }
+
+  /** Usuários pelos ids (os inexistentes são ignorados). */
+  @Transactional(readOnly = true)
+  public List<AppUser> getAll(Collection<Long> userIds) {
+    return userIds.isEmpty() ? List.of() : repository.findAllById(userIds);
   }
 
   @Transactional

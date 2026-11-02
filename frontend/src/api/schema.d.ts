@@ -100,6 +100,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/members/{memberId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateMember']
+    post?: never
+    delete: operations['deleteMember']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers/{travelerId}': {
     parameters: {
       query?: never
@@ -180,6 +196,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/share-links': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listShareLinks']
+    put?: never
+    post: operations['createShareLink']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/segments': {
     parameters: {
       query?: never
@@ -196,6 +228,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/members': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listMembers']
+    put?: never
+    post: operations['inviteMember']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers': {
     parameters: {
       query?: never
@@ -206,6 +254,22 @@ export interface paths {
     get: operations['listTravelers']
     put?: never
     post: operations['createTraveler']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/share-links/{token}/join': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['joinTrip']
     delete?: never
     options?: never
     head?: never
@@ -287,6 +351,22 @@ export interface paths {
     put?: never
     post?: never
     delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/share-links/{linkId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete: operations['revokeShareLink']
     options?: never
     head?: never
     patch?: never
@@ -509,6 +589,25 @@ export interface components {
       /** Format: int64 */
       version: number
     }
+    UpdateMemberRequest: {
+      /** Format: int64 */
+      version: number
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
+    }
+    MemberResponse: {
+      /** Format: int64 */
+      id: number
+      email: string
+      name?: string
+      pictureUrl?: string
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
+      pending: boolean
+      me: boolean
+      /** Format: int64 */
+      version: number
+    }
     UpdateTravelerRequest: {
       /** Format: int64 */
       version: number
@@ -562,6 +661,19 @@ export interface components {
       bookingRef?: string
       notes?: string
     }
+    CreateShareLinkRequest: {
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
+    }
+    ShareLinkResponse: {
+      /** Format: int64 */
+      id: number
+      token: string
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
+      /** Format: date-time */
+      createdAt: string
+    }
     SegmentRequest: {
       /** @enum {string} */
       type:
@@ -593,6 +705,12 @@ export interface components {
       bookingRef?: string
       notes?: string
     }
+    InviteMemberRequest: {
+      /** Format: email */
+      email: string
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
+    }
     TravelerRequest: {
       name: string
       /** @enum {string} */
@@ -602,6 +720,12 @@ export interface components {
       nationalities: string[]
       /** Format: date */
       passportExpiry?: string
+    }
+    JoinResponse: {
+      /** Format: int64 */
+      tripId: number
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
     }
     HomeCityDto: {
       name: string
@@ -1036,6 +1160,54 @@ export interface operations {
       }
     }
   }
+  updateMember: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        memberId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMemberRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MemberResponse']
+        }
+      }
+    }
+  }
+  deleteMember: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        memberId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   updateTraveler: {
     parameters: {
       query?: never
@@ -1246,6 +1418,54 @@ export interface operations {
       }
     }
   }
+  listShareLinks: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ShareLinkResponse'][]
+        }
+      }
+    }
+  }
+  createShareLink: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateShareLinkRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ShareLinkResponse']
+        }
+      }
+    }
+  }
   listSegments: {
     parameters: {
       query?: never
@@ -1294,6 +1514,54 @@ export interface operations {
       }
     }
   }
+  listMembers: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MemberResponse'][]
+        }
+      }
+    }
+  }
+  inviteMember: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InviteMemberRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MemberResponse']
+        }
+      }
+    }
+  }
   listTravelers: {
     parameters: {
       query?: never
@@ -1334,6 +1602,28 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['TravelerResponse']
+        }
+      }
+    }
+  }
+  joinTrip: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        token: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['JoinResponse']
         }
       }
     }
@@ -1470,6 +1760,27 @@ export interface operations {
         content: {
           'application/json': components['schemas']['CitySuggestionResponse'][]
         }
+      }
+    }
+  }
+  revokeShareLink: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        linkId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
       }
     }
   }

@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import type { Traveler } from '@/features/travelers/api'
 import { renderApp } from '@/test/render'
+import { shareLinks, tripMembers } from '@/test/sharing'
 import { server } from '@/test/server'
 import {
   childTraveler,
@@ -29,7 +30,13 @@ const byIds = (ids: number[]) => all.filter((t) => ids.includes(t.id))
 
 describe('Aba Pessoas', () => {
   it('editor marca e desmarca quem vai, mantendo quem outro membro trouxe', async () => {
-    server.use(tripDetail(), myTravelers(), tripTravelers(42, [meTraveler, otherTraveler]))
+    server.use(
+      tripDetail(),
+      myTravelers(),
+      tripTravelers(42, [meTraveler, otherTraveler]),
+      tripMembers(),
+      shareLinks(),
+    )
     const bodies = captureSet(byIds)
     const { user } = renderApp('/trips/42')
 
@@ -53,6 +60,8 @@ describe('Aba Pessoas', () => {
       tripDetail(),
       myTravelers([meTraveler]),
       tripTravelers(42, [meTraveler]),
+      tripMembers(),
+      shareLinks(),
       http.post('*/api/v1/travelers', () => HttpResponse.json(created, { status: 201 })),
     )
     const bodies = captureSet(() => [meTraveler, created])
@@ -68,7 +77,11 @@ describe('Aba Pessoas', () => {
   })
 
   it('leitor só vê a lista', async () => {
-    server.use(tripDetail({ ...testTrip, role: 'VIEWER' }), tripTravelers(42, [otherTraveler]))
+    server.use(
+      tripDetail({ ...testTrip, role: 'VIEWER' }),
+      tripTravelers(42, [otherTraveler]),
+      tripMembers(),
+    )
     const { user } = renderApp('/trips/42')
 
     await user.click(await screen.findByRole('tab', { name: 'Pessoas' }))

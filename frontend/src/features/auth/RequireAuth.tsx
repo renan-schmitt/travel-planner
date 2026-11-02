@@ -1,15 +1,27 @@
 import { LoaderCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Navigate } from 'react-router'
+import { Navigate, useLocation } from 'react-router'
+import { saveReturnTo, takeReturnTo } from '@/lib/return-to'
 import { useMe } from './api'
 
-/** Só renderiza o conteúdo com usuário logado; sem sessão, vai para `/login`. */
+/**
+ * Só renderiza o conteúdo com usuário logado; sem sessão, guarda o caminho pedido e vai para
+ * `/login`. Depois do login (que volta para `/`), retoma o caminho guardado.
+ */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { data: me, isPending, isError, error } = useMe()
+  const location = useLocation()
 
   if (isPending) return <FullPageLoading />
   if (isError) throw error
-  if (!me) return <Navigate to="/login" replace />
+  if (!me) {
+    saveReturnTo(location.pathname + location.search)
+    return <Navigate to="/login" replace />
+  }
+  if (location.pathname === '/') {
+    const returnTo = takeReturnTo()
+    if (returnTo) return <Navigate to={returnTo} replace />
+  }
   return children
 }
 

@@ -26,6 +26,7 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   server.resetHandlers()
   localStorage.clear()
+  sessionStorage.clear()
   document.documentElement.className = ''
 })
 afterAll(() => server.close())

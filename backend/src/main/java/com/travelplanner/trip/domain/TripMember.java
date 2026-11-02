@@ -50,4 +50,28 @@ public class TripMember extends BaseEntity {
     member.acceptedAt = acceptedAt;
     return member;
   }
+
+  /** Convite pendente: só o e-mail, até a pessoa entrar com ele. */
+  public static TripMember invite(Trip trip, String email, TripRole role) {
+    TripMember member = new TripMember();
+    member.trip = trip;
+    member.inviteEmail = email;
+    member.role = role;
+    return member;
+  }
+
+  /** {@code true} enquanto o convidado não entrou no sistema com o e-mail do convite. */
+  public boolean isPending() {
+    return userId == null;
+  }
+
+  /** Vincula o convite pendente ao usuário que entrou com o e-mail. */
+  public void accept(long userId, Instant now) {
+    this.userId = userId;
+    this.acceptedAt = now;
+  }
+
+  public void changeRole(TripRole role) {
+    this.role = role;
+  }
 }
