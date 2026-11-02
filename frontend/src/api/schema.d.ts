@@ -68,6 +68,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/segments/{segmentId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateSegment']
+    post?: never
+    delete: operations['deleteSegment']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers/{travelerId}': {
     parameters: {
       query?: never
@@ -126,6 +142,22 @@ export interface paths {
     get: operations['listStops']
     put?: never
     post: operations['createStop']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/segments': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listSegments']
+    put?: never
+    post: operations['createSegment']
     delete?: never
     options?: never
     head?: never
@@ -295,6 +327,79 @@ export interface components {
     ReorderStopsRequest: {
       stopIds: number[]
     }
+    UpdateSegmentRequest: {
+      /** Format: int64 */
+      version: number
+      /** @enum {string} */
+      type:
+        | 'FLIGHT'
+        | 'BUS'
+        | 'TRAIN'
+        | 'CAR'
+        | 'CAR_RENTAL'
+        | 'FERRY'
+        | 'TRANSFER'
+        | 'TAXI_RIDE'
+        | 'OTHER'
+      /** Format: int64 */
+      originStopId?: number
+      /** Format: int64 */
+      destinationStopId?: number
+      /** Format: int64 */
+      localStopId?: number
+      originLabel?: string
+      destinationLabel?: string
+      /** Format: date-time */
+      departAt: string
+      departTz: string
+      /** Format: date-time */
+      arriveAt?: string
+      arriveTz?: string
+      carrier?: string
+      code?: string
+      bookingRef?: string
+      notes?: string
+    }
+    SegmentResponse: {
+      /** Format: int64 */
+      id: number
+      /** @enum {string} */
+      type:
+        | 'FLIGHT'
+        | 'BUS'
+        | 'TRAIN'
+        | 'CAR'
+        | 'CAR_RENTAL'
+        | 'FERRY'
+        | 'TRANSFER'
+        | 'TAXI_RIDE'
+        | 'OTHER'
+      local: boolean
+      /** Format: int64 */
+      originStopId?: number
+      /** Format: int64 */
+      destinationStopId?: number
+      /** Format: int64 */
+      localStopId?: number
+      originLabel?: string
+      destinationLabel?: string
+      /** Format: date-time */
+      departAt: string
+      departTz: string
+      /** Format: date-time */
+      departInstant: string
+      /** Format: date-time */
+      arriveAt?: string
+      arriveTz?: string
+      /** Format: date-time */
+      arriveInstant?: string
+      carrier?: string
+      code?: string
+      bookingRef?: string
+      notes?: string
+      /** Format: int64 */
+      version: number
+    }
     UpdateTravelerRequest: {
       /** Format: int64 */
       version: number
@@ -330,6 +435,37 @@ export interface components {
       arrivalDate: string
       /** Format: date */
       departureDate: string
+      notes?: string
+    }
+    SegmentRequest: {
+      /** @enum {string} */
+      type:
+        | 'FLIGHT'
+        | 'BUS'
+        | 'TRAIN'
+        | 'CAR'
+        | 'CAR_RENTAL'
+        | 'FERRY'
+        | 'TRANSFER'
+        | 'TAXI_RIDE'
+        | 'OTHER'
+      /** Format: int64 */
+      originStopId?: number
+      /** Format: int64 */
+      destinationStopId?: number
+      /** Format: int64 */
+      localStopId?: number
+      originLabel?: string
+      destinationLabel?: string
+      /** Format: date-time */
+      departAt: string
+      departTz: string
+      /** Format: date-time */
+      arriveAt?: string
+      arriveTz?: string
+      carrier?: string
+      code?: string
+      bookingRef?: string
       notes?: string
     }
     TravelerRequest: {
@@ -596,6 +732,54 @@ export interface operations {
       }
     }
   }
+  updateSegment: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        segmentId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSegmentRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SegmentResponse']
+        }
+      }
+    }
+  }
+  deleteSegment: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        segmentId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   updateTraveler: {
     parameters: {
       query?: never
@@ -752,6 +936,54 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['StopResponse']
+        }
+      }
+    }
+  }
+  listSegments: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SegmentResponse'][]
+        }
+      }
+    }
+  }
+  createSegment: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SegmentRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SegmentResponse']
         }
       }
     }
