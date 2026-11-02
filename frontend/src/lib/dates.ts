@@ -49,3 +49,19 @@ export function formatDuration(from: string, to: string): string {
   if (hours === 0) return `${minutes}min`
   return minutes === 0 ? `${hours}h` : `${hours}h${String(minutes).padStart(2, '0')}`
 }
+
+const weekdayFormat = new Intl.DateTimeFormat('pt-BR', { weekday: 'short' })
+
+/** Cabeçalho de dia da timeline: "2027-03-10" → "Qua, 10/03". */
+export function formatDayHeader(iso: string): string {
+  const weekday = weekdayFormat.format(parseDate(iso)).replace('.', '')
+  const [, month, day] = iso.split('-')
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}/${month}`
+}
+
+/** Data de hoje no relógio do aparelho, como ISO ("2027-03-10"). */
+export function todayIso(now: Date = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}

@@ -244,6 +244,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/itinerary': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['getItinerary']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/places/cities/{placeId}': {
     parameters: {
       query?: never
@@ -626,6 +642,87 @@ export interface components {
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
       /** Format: int32 */
       destinationCount: number
+    }
+    ItineraryDayResponse: {
+      /** Format: date */
+      date: string
+      stops: components['schemas']['ItineraryStopResponse'][]
+      events: components['schemas']['ItineraryEventResponse'][]
+      overnight: components['schemas']['OvernightResponse']
+      gap: boolean
+    }
+    ItineraryEventResponse: {
+      /** @enum {string} */
+      kind: 'CHECK_OUT' | 'SEGMENT' | 'SEGMENT_DEPARTURE' | 'SEGMENT_ARRIVAL' | 'CHECK_IN'
+      time?: string
+      /** Format: date-time */
+      instant?: string
+      segment?: components['schemas']['ItinerarySegmentResponse']
+      lodging?: components['schemas']['ItineraryLodgingResponse']
+    }
+    ItineraryLodgingResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: int64 */
+      stopId: number
+      /** @enum {string} */
+      kind: 'HOTEL' | 'RENTAL' | 'FRIENDS_HOME'
+      name: string
+      address?: string
+      /** Format: date */
+      checkIn: string
+      /** Format: date */
+      checkOut: string
+    }
+    ItineraryResponse: {
+      days: components['schemas']['ItineraryDayResponse'][]
+    }
+    ItinerarySegmentResponse: {
+      /** Format: int64 */
+      id: number
+      /** @enum {string} */
+      type:
+        | 'FLIGHT'
+        | 'BUS'
+        | 'TRAIN'
+        | 'CAR'
+        | 'CAR_RENTAL'
+        | 'FERRY'
+        | 'TRANSFER'
+        | 'TAXI_RIDE'
+        | 'OTHER'
+      local: boolean
+      origin?: string
+      destination?: string
+      localCity?: string
+      /** Format: date-time */
+      departAt: string
+      /** Format: date-time */
+      departInstant: string
+      /** Format: date-time */
+      arriveAt?: string
+      /** Format: date-time */
+      arriveInstant?: string
+      carrier?: string
+      code?: string
+      bookingRef?: string
+    }
+    ItineraryStopResponse: {
+      /** Format: int64 */
+      id: number
+      cityName: string
+      countryCode: string
+      timezone: string
+      /** Format: date */
+      arrivalDate: string
+      /** Format: date */
+      departureDate: string
+    }
+    OvernightResponse: {
+      /** @enum {string} */
+      kind: 'LODGING' | 'IN_TRANSIT' | 'HOME' | 'MISSING'
+      lodging?: components['schemas']['ItineraryLodgingResponse']
+      segment?: components['schemas']['ItinerarySegmentResponse']
     }
     CityResponse: {
       placeId: string
@@ -1303,6 +1400,28 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['LodgingResponse'][]
+        }
+      }
+    }
+  }
+  getItinerary: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ItineraryResponse']
         }
       }
     }

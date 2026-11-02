@@ -15,6 +15,10 @@ export type CreateLodging = components['schemas']['LodgingRequest']
 export type UpdateLodging = components['schemas']['UpdateLodgingRequest']
 export type BoardType = NonNullable<Lodging['boardType']>
 export type LodgingKind = Lodging['kind']
+export type Itinerary = components['schemas']['ItineraryResponse']
+export type ItineraryDay = components['schemas']['ItineraryDayResponse']
+export type ItineraryEvent = components['schemas']['ItineraryEventResponse']
+export type ItinerarySegment = components['schemas']['ItinerarySegmentResponse']
 
 export const stopKeys = {
   trip: (tripId: number) => ['trips', 'stops', tripId] as const,
@@ -26,6 +30,24 @@ export const segmentKeys = {
 
 export const lodgingKeys = {
   trip: (tripId: number) => ['trips', 'lodgings', tripId] as const,
+}
+
+export const itineraryKeys = {
+  trip: (tripId: number) => ['trips', 'itinerary', tripId] as const,
+}
+
+/** Timeline dia a dia (vazia enquanto a viagem não tem datas). */
+export function useItinerary(tripId: number) {
+  return useQuery({
+    queryKey: itineraryKeys.trip(tripId),
+    queryFn: async () => {
+      const { data, response } = await api.GET('/api/v1/trips/{tripId}/itinerary', {
+        params: { path: { tripId } },
+      })
+      if (!data) throw new ApiError(response.status)
+      return data
+    },
+  })
 }
 
 /** Paradas na ordem do roteiro. */
@@ -99,6 +121,7 @@ export function useReorderStops(tripId: number) {
     },
     onSuccess: (stops) => {
       queryClient.setQueryData(stopKeys.trip(tripId), stops)
+      void queryClient.invalidateQueries({ queryKey: itineraryKeys.trip(tripId) })
       void queryClient.invalidateQueries({ queryKey: tripKeys.detail(tripId) })
     },
     onError: () => void queryClient.invalidateQueries({ queryKey: stopKeys.trip(tripId) }),
@@ -220,9 +243,10 @@ export function useDeleteLodging(tripId: number) {
   })
 }
 
-/** Hospedagens não mudam as datas da viagem (ficam dentro das paradas). */
+/** Hospedagens não mudam as datas da viagem (ficam dentro das paradas), só a timeline. */
 function invalidateLodgings(queryClient: ReturnType<typeof useQueryClient>, tripId: number) {
   void queryClient.invalidateQueries({ queryKey: lodgingKeys.trip(tripId) })
+  void queryClient.invalidateQueries({ queryKey: itineraryKeys.trip(tripId) })
 }
 
 /**
@@ -233,6 +257,7 @@ function invalidate(queryClient: ReturnType<typeof useQueryClient>, tripId: numb
   void queryClient.invalidateQueries({ queryKey: stopKeys.trip(tripId) })
   void queryClient.invalidateQueries({ queryKey: segmentKeys.trip(tripId) })
   void queryClient.invalidateQueries({ queryKey: lodgingKeys.trip(tripId) })
+  void queryClient.invalidateQueries({ queryKey: itineraryKeys.trip(tripId) })
   void queryClient.invalidateQueries({ queryKey: tripKeys.detail(tripId) })
   void queryClient.invalidateQueries({ queryKey: ['trips', 'list'] })
 }
