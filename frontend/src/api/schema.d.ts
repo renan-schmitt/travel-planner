@@ -52,6 +52,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}/lodgings/{lodgingId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateLodging']
+    post?: never
+    delete: operations['deleteLodging']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/stops/order': {
     parameters: {
       query?: never
@@ -148,6 +164,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}/lodgings': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listLodgings']
+    put?: never
+    post: operations['createLodging']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/segments': {
     parameters: {
       query?: never
@@ -194,6 +226,22 @@ export interface paths {
     options?: never
     head?: never
     patch: operations['updateMe']
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/lodgings': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listTripLodgings']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
     trace?: never
   }
   '/api/v1/places/cities/{placeId}': {
@@ -324,6 +372,51 @@ export interface components {
       /** Format: int64 */
       version: number
     }
+    UpdateLodgingRequest: {
+      /** Format: int64 */
+      version: number
+      /** @enum {string} */
+      kind: 'HOTEL' | 'RENTAL' | 'FRIENDS_HOME'
+      name: string
+      address?: string
+      /** Format: date */
+      checkIn: string
+      /** Format: date */
+      checkOut: string
+      /** @enum {string} */
+      boardType?: 'ROOM_ONLY' | 'BREAKFAST' | 'HALF_BOARD' | 'FULL_BOARD' | 'ALL_INCLUSIVE'
+      /** Format: int32 */
+      priceTier?: number
+      bookingRef?: string
+      notes?: string
+    }
+    LodgingResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: int64 */
+      stopId: number
+      /** @enum {string} */
+      kind: 'HOTEL' | 'RENTAL' | 'FRIENDS_HOME'
+      placeId?: string
+      name: string
+      address?: string
+      /** Format: date */
+      checkIn: string
+      /** Format: date */
+      checkOut: string
+      /** Format: int32 */
+      nights: number
+      /** @enum {string} */
+      boardType?: 'ROOM_ONLY' | 'BREAKFAST' | 'HALF_BOARD' | 'FULL_BOARD' | 'ALL_INCLUSIVE'
+      /** Format: int32 */
+      priceTier?: number
+      /** @enum {string} */
+      priceTierSource?: 'PLACES' | 'HEURISTIC' | 'AI' | 'USER'
+      bookingRef?: string
+      notes?: string
+      /** Format: int64 */
+      version: number
+    }
     ReorderStopsRequest: {
       stopIds: number[]
     }
@@ -435,6 +528,22 @@ export interface components {
       arrivalDate: string
       /** Format: date */
       departureDate: string
+      notes?: string
+    }
+    LodgingRequest: {
+      /** @enum {string} */
+      kind: 'HOTEL' | 'RENTAL' | 'FRIENDS_HOME'
+      name: string
+      address?: string
+      /** Format: date */
+      checkIn: string
+      /** Format: date */
+      checkOut: string
+      /** @enum {string} */
+      boardType?: 'ROOM_ONLY' | 'BREAKFAST' | 'HALF_BOARD' | 'FULL_BOARD' | 'ALL_INCLUSIVE'
+      /** Format: int32 */
+      priceTier?: number
+      bookingRef?: string
       notes?: string
     }
     SegmentRequest: {
@@ -706,6 +815,56 @@ export interface operations {
       }
     }
   }
+  updateLodging: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+        lodgingId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLodgingRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LodgingResponse']
+        }
+      }
+    }
+  }
+  deleteLodging: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+        lodgingId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   reorderStops: {
     parameters: {
       query?: never
@@ -940,6 +1099,56 @@ export interface operations {
       }
     }
   }
+  listLodgings: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LodgingResponse'][]
+        }
+      }
+    }
+  }
+  createLodging: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LodgingRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LodgingResponse']
+        }
+      }
+    }
+  }
   listSegments: {
     parameters: {
       query?: never
@@ -1072,6 +1281,28 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['MeResponse']
+        }
+      }
+    }
+  }
+  listTripLodgings: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LodgingResponse'][]
         }
       }
     }

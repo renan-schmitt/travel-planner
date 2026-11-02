@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sheet'
 import type { Trip } from '@/features/trips/api'
 import { ApiError } from '@/lib/api'
-import { useCreateStop, useDeleteStop, useUpdateStop, type Stop } from './api'
+import { useCreateStop, useDeleteStop, useUpdateStop, type Lodging, type Stop } from './api'
 import { StopForm } from './StopForm'
 import { emptyStop, toFormValues, toStopBody, type StopFormValues } from './stop-form'
 
@@ -28,12 +28,15 @@ import { emptyStop, toFormValues, toStopBody, type StopFormValues } from './stop
 export function StopSheet({
   trip,
   stops,
+  lodgings = [],
   stop,
   open,
   onOpenChange,
 }: {
   trip: Trip
   stops: Stop[]
+  /** Hospedagens da viagem (a edição avisa se as novas datas deixarem alguma de fora). */
+  lodgings?: Lodging[]
   stop?: Stop
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -54,7 +57,13 @@ export function StopSheet({
         </SheetHeader>
         <div className="px-4 pb-4">
           {stop ? (
-            <EditStop tripId={trip.id} stop={stop} stops={stops} onDone={close} />
+            <EditStop
+              tripId={trip.id}
+              stop={stop}
+              stops={stops}
+              lodgings={lodgings.filter((l) => l.stopId === stop.id)}
+              onDone={close}
+            />
           ) : (
             <NewStop trip={trip} stops={stops} onDone={close} />
           )}
@@ -99,11 +108,13 @@ function EditStop({
   tripId,
   stop,
   stops,
+  lodgings,
   onDone,
 }: {
   tripId: number
   stop: Stop
   stops: Stop[]
+  lodgings: Lodging[]
   onDone: () => void
 }) {
   const { t } = useTranslation()
@@ -128,6 +139,7 @@ function EditStop({
       <StopForm
         initialValues={toFormValues(stop)}
         otherStops={stops.filter((s) => s.id !== stop.id)}
+        lodgings={lodgings}
         submitting={update.isPending}
         onSubmit={onSubmit}
         onCancel={onDone}

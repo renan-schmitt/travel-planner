@@ -10,6 +10,11 @@ export type Segment = components['schemas']['SegmentResponse']
 export type CreateSegment = components['schemas']['SegmentRequest']
 export type UpdateSegment = components['schemas']['UpdateSegmentRequest']
 export type TransportType = Segment['type']
+export type Lodging = components['schemas']['LodgingResponse']
+export type CreateLodging = components['schemas']['LodgingRequest']
+export type UpdateLodging = components['schemas']['UpdateLodgingRequest']
+export type BoardType = NonNullable<Lodging['boardType']>
+export type LodgingKind = Lodging['kind']
 
 export const stopKeys = {
   trip: (tripId: number) => ['trips', 'stops', tripId] as const,
@@ -17,6 +22,10 @@ export const stopKeys = {
 
 export const segmentKeys = {
   trip: (tripId: number) => ['trips', 'segments', tripId] as const,
+}
+
+export const lodgingKeys = {
+  trip: (tripId: number) => ['trips', 'lodgings', tripId] as const,
 }
 
 /** Paradas na ordem do roteiro. */
@@ -153,13 +162,77 @@ export function useDeleteSegment(tripId: number) {
   })
 }
 
+/** Hospedagens de todas as paradas da viagem, por check-in. */
+export function useLodgings(tripId: number) {
+  return useQuery({
+    queryKey: lodgingKeys.trip(tripId),
+    queryFn: async () => {
+      const { data, response } = await api.GET('/api/v1/trips/{tripId}/lodgings', {
+        params: { path: { tripId } },
+      })
+      if (!data) throw new ApiError(response.status)
+      return data
+    },
+  })
+}
+
+export function useCreateLodging(tripId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ stopId, body }: { stopId: number; body: CreateLodging }) => {
+      const { data, response } = await api.POST('/api/v1/trips/{tripId}/stops/{stopId}/lodgings', {
+        params: { path: { tripId, stopId } },
+        body,
+      })
+      if (!data) throw new ApiError(response.status)
+      return data
+    },
+    onSuccess: () => invalidateLodgings(queryClient, tripId),
+  })
+}
+
+export function useUpdateLodging(tripId: number, lodging: Lodging) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (body: UpdateLodging) => {
+      const { data, response } = await api.PUT(
+        '/api/v1/trips/{tripId}/stops/{stopId}/lodgings/{lodgingId}',
+        { params: { path: { tripId, stopId: lodging.stopId, lodgingId: lodging.id } }, body },
+      )
+      if (!data) throw new ApiError(response.status)
+      return data
+    },
+    onSettled: () => invalidateLodgings(queryClient, tripId),
+  })
+}
+
+export function useDeleteLodging(tripId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (lodging: Lodging) => {
+      const { response } = await api.DELETE(
+        '/api/v1/trips/{tripId}/stops/{stopId}/lodgings/{lodgingId}',
+        { params: { path: { tripId, stopId: lodging.stopId, lodgingId: lodging.id } } },
+      )
+      if (!response.ok) throw new ApiError(response.status)
+    },
+    onSuccess: () => invalidateLodgings(queryClient, tripId),
+  })
+}
+
+/** Hospedagens não mudam as datas da viagem (ficam dentro das paradas). */
+function invalidateLodgings(queryClient: ReturnType<typeof useQueryClient>, tripId: number) {
+  void queryClient.invalidateQueries({ queryKey: lodgingKeys.trip(tripId) })
+}
+
 /**
  * Paradas e trechos mudam as datas derivadas e a contagem de destinos da viagem; excluir uma parada
- * exclui os trechos ligados a ela.
+ * exclui os trechos e as hospedagens ligados a ela.
  */
 function invalidate(queryClient: ReturnType<typeof useQueryClient>, tripId: number) {
   void queryClient.invalidateQueries({ queryKey: stopKeys.trip(tripId) })
   void queryClient.invalidateQueries({ queryKey: segmentKeys.trip(tripId) })
+  void queryClient.invalidateQueries({ queryKey: lodgingKeys.trip(tripId) })
   void queryClient.invalidateQueries({ queryKey: tripKeys.detail(tripId) })
   void queryClient.invalidateQueries({ queryKey: ['trips', 'list'] })
 }

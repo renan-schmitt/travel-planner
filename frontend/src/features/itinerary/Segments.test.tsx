@@ -97,6 +97,7 @@ function itinerary(stops: Stop[], segments: Segment[]) {
   return [
     http.get('*/api/v1/trips/42/stops', () => HttpResponse.json(stops)),
     http.get('*/api/v1/trips/42/segments', () => HttpResponse.json(segments)),
+    http.get('*/api/v1/trips/42/lodgings', () => HttpResponse.json([])),
   ]
 }
 
