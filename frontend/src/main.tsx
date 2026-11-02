@@ -5,11 +5,17 @@ import { RouterProvider } from 'react-router/dom'
 import { Providers } from '@/app/providers'
 import { routes } from '@/app/routes'
 import { setUnauthorizedHandler } from '@/lib/api'
+import { saveReturnTo } from '@/lib/return-to'
 import '@/lib/i18n'
 import './index.css'
 
 const router = createBrowserRouter(routes)
-setUnauthorizedHandler(() => void router.navigate('/login'))
+setUnauthorizedHandler(() => {
+  const { pathname, search } = router.state.location
+  if (pathname === '/login') return
+  saveReturnTo(pathname + search)
+  void router.navigate('/login')
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

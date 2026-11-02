@@ -10,4 +10,9 @@ public enum TripRole {
   public boolean atLeast(TripRole required) {
     return compareTo(required) >= 0;
   }
+
+  /** O maior dos dois papéis. */
+  public TripRole max(TripRole other) {
+    return atLeast(other) ? this : other;
+  }
 }

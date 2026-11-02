@@ -7,4 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AppUserRepository extends JpaRepository<AppUser, Long> {
 
   Optional<AppUser> findByGoogleSub(String googleSub);
+
+  /** A collation da coluna não diferencia maiúsculas. */
+  Optional<AppUser> findFirstByEmailOrderByIdAsc(String email);
 }

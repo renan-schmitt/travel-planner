@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { TripSharing } from '@/features/sharing/TripSharing'
 import { hasRole, type Trip } from '@/features/trips/api'
 import { useSetTripTravelers, useTravelers, useTripTravelers, type Traveler } from './api'
 import { TravelerSheet } from './TravelerSheet'
@@ -16,6 +17,15 @@ import { TravelerSummary } from './TravelerSummary'
  * viagem (trazidos por outros membros); cada mudança é salva na hora. Leitor só vê a lista.
  */
 export function TripPeopleTab({ trip }: { trip: Trip }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <GoingCard trip={trip} />
+      <TripSharing trip={trip} />
+    </div>
+  )
+}
+
+function GoingCard({ trip }: { trip: Trip }) {
   const { t } = useTranslation()
   const canEdit = hasRole(trip.role, 'EDITOR')
   const { data: going, error } = useTripTravelers(trip.id)
