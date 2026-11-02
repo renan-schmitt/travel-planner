@@ -26,7 +26,7 @@
 | 7 | Cliente Places + paradas com autocomplete de cidade | MVP | ☑ |
 | 8 | Transporte | MVP | ☑ |
 | 9 | Hospedagem (cadastro manual) | MVP | ☑ |
-| 10 | Timeline dia a dia (leitura) (S2) | MVP | ☐ |
+| 10 | Timeline dia a dia (leitura) (S2) | MVP | ☑ |
 | 11 | Partilha: convites, papéis e link | MVP | ☐ |
 | 12 | Checklists manuais | MVP | ☐ |
 | 13 | Templates de checklist (S4) | MVP | ☐ |
@@ -560,7 +560,7 @@ Em dev, o frontend roda em `:5173`, mas o fluxo OAuth passa pelo backend em `:80
    - `date`, `stops` (paradas em que se está nesse dia, até 2 em dia de troca);
    - `events` ordenados por horário local: partidas/chegadas de trechos, check-in/check-out de hospedagem (atividades entram na Fase 18);
    - `overnight`: onde se dorme (hospedagem, ou "em trânsito" se houver trecho cruzando a noite, ou `null` = lacuna).
-2. Lógica pura, sem efeitos colaterais. Recebe um **`TripSnapshot`** (record imutável com viagem, paradas, trechos, hospedagens, viajantes, usuário dono). Criar `TripSnapshotLoader` no módulo `trip`: o **mesmo snapshot será usado pelo motor de lacunas** (Fase 14).
+2. Lógica pura, sem efeitos colaterais. Recebe um **`TripSnapshot`** (record imutável com viagem, paradas, trechos, hospedagens, viajantes, usuário dono). Criar `TripSnapshotLoader` no módulo `itinerary` (o `trip` não pode depender dele; ver notas da Fase 10): o **mesmo snapshot será usado pelo motor de lacunas** (Fase 14).
 3. `GET /api/v1/trips/{tripId}/itinerary` (VIEWER).
 
 **Frontend**
@@ -1474,3 +1474,12 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **Validação:** `LodgingDetails#validate`: `checkOut > checkIn` → `checkOut`; check-in antes da chegada → `checkIn`; check-out depois da saída → `checkOut` (no limite vale). **Acréscimo:** editar uma parada para datas que deixariam uma hospedagem de fora dá 400 em `arrivalDate` (o formulário da parada avisa antes de salvar). Excluir a parada exclui as hospedagens (`ON DELETE CASCADE`; o aviso de exclusão diz isso). As hospedagens não mudam as datas da viagem (ficam dentro das paradas). `TripChangedEvent` em toda alteração.
 - **Frontend:** em cada parada da aba Roteiro, as hospedagens (ícone de cama, nome, `PriceTier`, "11 – 13 de mar. · 2 noites", regime e reserva) e o botão "Adicionar hospedagem"/"Outra hospedagem" (não aparece em bate-volta). Formulário em *bottom sheet* (`LodgingSheet`/`LodgingForm`/`lodging-form.ts`): nome, endereço, check-in/check-out (limitados às datas da parada; a nova começa depois da última hospedagem da parada), regime (select), faixa de preço e reserva. O seletor `PriceTierInput` (rádios "Não sei", `$`…`$$$$`) fica em `components/` ao lado do `PriceTier` e aparece também em `/dev/ui`.
 - **Testes:** `LodgingDetailsTest` (5) e `LodgingControllerIT` (6: dois hotéis na mesma cidade + listagem da viagem, casa de amigo/parente, edição/409/exclusão, validação, datas da parada × hospedagens e cascata, papéis). No frontend, `Lodgings.test.tsx` (6) e `lodging-form.test.ts` (5).
+
+### Fase 10
+- **Snapshot no módulo `itinerary`:** `TripSnapshot` e `TripSnapshotLoader` ficaram em `itinerary/domain`, e não em `trip` como o plano dizia, porque o snapshot contém paradas, trechos e hospedagens (do `itinerary`, que já depende de `trip`). O motor de lacunas (Fase 14) depende de `itinerary`. O snapshot guarda records imutáveis (`StopEntry`, `SegmentEntry`, `LodgingEntry`, `TravelerEntry` com `id` + os `*Details` já existentes), não entidades JPA; trechos em ordem cronológica real. O loader não verifica acesso (quem chama verifica).
+- **Lógica pura em `ItineraryBuilder.build(snapshot)`** (testada em `ItineraryBuilderTest`); o `ItineraryService` só verifica `VIEWER`, carrega o snapshot e chama o builder. `GET /api/v1/trips/{tripId}/itinerary` → `{days: [...]}`.
+- **Regras:** dias de `startDate` a `endDate` (sem datas → lista vazia; sem fim → última data do roteiro; no máximo 366 dias). Trechos entram no dia da data **local** de cada ponta: partida e chegada no mesmo dia (ou sem chegada) = um evento `SEGMENT`; em dias diferentes = `SEGMENT_DEPARTURE` + `SEGMENT_ARRIVAL`. Hospedagens não têm horário, então a ordem é: check-outs, trechos pelo horário local, check-ins.
+- **Noite (`overnight`, desvio):** sempre preenchida, com `kind` em vez de `null` = lacuna: `LODGING` (hospedagem com `checkIn <= dia < checkOut`; vence o trânsito), `IN_TRANSIT` (trecho que parte até o dia e chega depois dele), `MISSING` (lacuna: noite entre a primeira chegada e a última saída das paradas sem hospedagem nem trecho — inclui noites "entre paradas") ou `HOME` (fora das paradas, ex.: último dia). O dia tem `gap` = `MISSING`, para a Fase 14/15.
+- **Resposta:** eventos com `time` ("22:40", relógio local) e `instant` (offset da ponta); trecho resumido com `origin`/`destination` já resolvidos (rótulo ou cidade; nulo = casa) e `localCity`; hospedagem resumida.
+- **Frontend:** aba "Timeline" (`features/itinerary/TimelineTab`): cabeçalho "Ter, 10/03 · 🇵🇹 Lisboa → 🇵🇹 Porto" (ou "Em trânsito"), linha vertical com ícone por evento em círculo `--accent`, horário com o GMT da ponta, "Dormir: …" e a noite descoberta em `--warning-soft` com borda tracejada; no topo, um selo "N noites sem hospedagem". "Hoje" é a data do aparelho: o dia ganha o selo "Hoje", a lista rola até ele e aparece o botão "Ir para hoje". **Acréscimo:** viagem em andamento abre direto na aba Timeline (ESP §6.3: tela principal durante a viagem). As mutações de paradas, trechos e hospedagens invalidam a timeline.
+- **Testes:** `ItineraryBuilderTest` (9: voo noturno em trânsito, dia de troca, último dia em casa, noite sem hospedagem e entre paradas, ordem por horário, sem fim, datas manuais além do roteiro, limite de dias, sem datas) e `ItineraryControllerIT` (3: roteiro completo, viagem sem datas, papéis). No frontend, `Timeline.test.tsx` (3) e `lib/dates.test.ts`.

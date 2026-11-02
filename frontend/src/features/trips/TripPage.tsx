@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ItineraryTab } from '@/features/itinerary/ItineraryTab'
+import { TimelineTab } from '@/features/itinerary/TimelineTab'
 import { TripPeopleTab } from '@/features/travelers/TripPeopleTab'
 import { hasRole, useDeleteTrip, useTrip, type Trip } from './api'
 import { defaultTripColor } from './trip-colors'
@@ -69,7 +70,8 @@ export function TripPage() {
   return (
     <>
       <TripHeader trip={trip} />
-      <Tabs defaultValue="itinerary">
+      {/* Durante a viagem, a timeline é a tela principal (ESP §6.3). */}
+      <Tabs defaultValue={trip.status === 'IN_PROGRESS' ? 'timeline' : 'itinerary'}>
         {/* Rola na horizontal no celular; as abas não cabem em 360 px. */}
         <div className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4">
           <TabsList variant="line" className="h-11 w-max">
@@ -85,6 +87,8 @@ export function TripPage() {
           <TabsContent key={key} value={key}>
             {key === 'itinerary' ? (
               <ItineraryTab trip={trip} />
+            ) : key === 'timeline' ? (
+              <TimelineTab trip={trip} />
             ) : key === 'people' ? (
               <TripPeopleTab trip={trip} />
             ) : (
