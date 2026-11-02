@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, House, MapPinPlus, Route } from 'lucide-react'
+import { ArrowDown, ArrowUp, BedDouble, House, MapPinPlus, Route } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -9,7 +9,17 @@ import { hasRole, type Trip } from '@/features/trips/api'
 import { countryFlag } from '@/lib/countries'
 import { formatDateRange } from '@/lib/dates'
 import { timeZoneLabel } from '@/lib/timezones'
-import { useReorderStops, useSegments, useStops, type Segment, type Stop } from './api'
+import {
+  useLodgings,
+  useReorderStops,
+  useSegments,
+  useStops,
+  type Lodging,
+  type Segment,
+  type Stop,
+} from './api'
+import { LodgingSheet } from './LodgingSheet'
+import { LodgingSummary } from './LodgingSummary'
 import { browserTimeZone } from './segment-form'
 import { SegmentSheet } from './SegmentSheet'
 import { useSegmentTitle } from './segment-title'
@@ -17,8 +27,8 @@ import { SegmentSummary } from './SegmentSummary'
 import { StopSheet } from './StopSheet'
 
 /**
- * Aba "Roteiro": paradas na ordem da viagem com os trechos de transporte intercalados (casa → ✈ →
- * Lisboa → 🚆 → Porto → ✈ → casa). Os trechos que saem de casa vêm antes da primeira parada; os
+ * Aba "Roteiro": paradas na ordem da viagem, cada uma com as suas hospedagens, e os trechos de
+ * transporte intercalados (casa → ✈ → Lisboa → 🚆 → Porto → ✈ → casa). Os trechos que saem de casa vêm antes da primeira parada; os
  * locais e os que saem de uma parada, logo abaixo dela. Editor adiciona/edita em bottom sheet e
  * reordena as paradas com ↑/↓ (o drag-and-drop chega na Fase 18). Leitor só vê o roteiro.
  */
@@ -27,12 +37,15 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
   const canEdit = hasRole(trip.role, 'EDITOR')
   const { data: stops, error } = useStops(trip.id)
   const { data: segments = [] } = useSegments(trip.id)
+  const { data: lodgings = [] } = useLodgings(trip.id)
   const { data: me } = useMe()
   const homeTz = me?.homeCity?.timezone ?? browserTimeZone()
   const reorder = useReorderStops(trip.id)
   // `editing` undefined = sheet fechado; null = nova parada.
   const [editing, setEditing] = useState<Stop | null>()
   const [editingSegment, setEditingSegment] = useState<Segment | null>()
+  // Sheet de hospedagem: a parada e, ao editar, a hospedagem.
+  const [editingLodging, setEditingLodging] = useState<{ stop: Stop; lodging?: Lodging }>()
   const fromHome = segments.filter((s) => !s.local && s.originStopId == null)
   const toHome = segments.some((s) => !s.local && s.destinationStopId == null)
   const homeName = me?.homeCity?.name
@@ -116,6 +129,12 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
                     </div>
                   )}
                 </div>
+                <StopLodgings
+                  stop={stop}
+                  lodgings={lodgings.filter((l) => l.stopId === stop.id)}
+                  onAdd={canEdit ? () => setEditingLodging({ stop }) : undefined}
+                  onEdit={canEdit ? (lodging) => setEditingLodging({ stop, lodging }) : undefined}
+                />
                 {segmentRows(
                   segments.filter((s) => s.originStopId === stop.id || s.localStopId === stop.id),
                 )}
@@ -149,10 +168,21 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
             onOpenChange={(open) => !open && setEditingSegment(undefined)}
           />
         )}
+        {canEdit && (
+          <LodgingSheet
+            tripId={trip.id}
+            stop={editingLodging?.stop}
+            lodgings={lodgings}
+            lodging={editingLodging?.lodging}
+            open={editingLodging !== undefined}
+            onOpenChange={(open) => !open && setEditingLodging(undefined)}
+          />
+        )}
         {canEdit && stops && (
           <StopSheet
             trip={trip}
             stops={stops}
+            lodgings={lodgings}
             stop={editing ?? undefined}
             open={editing !== undefined}
             onOpenChange={(open) => !open && setEditing(undefined)}
@@ -174,6 +204,65 @@ function HomeNode({ name }: { name?: string }) {
         {t('segments.home')}
         {name && <span className="font-normal text-muted-foreground">{` · ${name}`}</span>}
       </p>
+    </div>
+  )
+}
+
+/**
+ * Hospedagens da parada, por check-in. Editor toca para editar e adiciona outra (ex.: dois hotéis
+ * na mesma cidade); bate-volta (0 noite) não tem hospedagem.
+ */
+function StopLodgings({
+  stop,
+  lodgings,
+  onAdd,
+  onEdit,
+}: {
+  stop: Stop
+  lodgings: Lodging[]
+  onAdd?: () => void
+  onEdit?: (lodging: Lodging) => void
+}) {
+  const { t } = useTranslation()
+  if (lodgings.length === 0 && (!onAdd || stop.nights === 0)) return null
+  return (
+    <div
+      role="group"
+      aria-label={t('lodgings.listLabel', { city: stop.cityName })}
+      className="ml-11 flex flex-col gap-1 pb-1"
+    >
+      {lodgings.map((lodging) => (
+        <div key={lodging.id}>
+          {onEdit ? (
+            <button
+              type="button"
+              className="-mx-2 w-full rounded-lg px-2 py-1 text-left hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              aria-label={t('lodgings.edit', { name: lodging.name })}
+              onClick={() => onEdit(lodging)}
+            >
+              <LodgingSummary lodging={lodging} />
+            </button>
+          ) : (
+            <div className="py-1">
+              <LodgingSummary lodging={lodging} />
+            </div>
+          )}
+        </div>
+      ))}
+      {onAdd && stop.nights > 0 && (
+        <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-mx-2 text-muted-foreground"
+            aria-label={t('lodgings.addIn', { city: stop.cityName })}
+            onClick={onAdd}
+          >
+            <BedDouble strokeWidth={1.75} aria-hidden />
+            {t(lodgings.length === 0 ? 'lodgings.add' : 'lodgings.addAnother')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

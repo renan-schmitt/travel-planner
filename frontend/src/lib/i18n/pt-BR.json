@@ -97,7 +97,9 @@
   "priceTier": {
     "label": "Faixa de preço: {{level}} de 4",
     "estimated": "Estimado",
-    "estimatedLabel": "Faixa de preço estimada: {{level}} de 4"
+    "estimatedLabel": "Faixa de preço estimada: {{level}} de 4",
+    "title": "Faixa de preço",
+    "unknown": "Não sei"
   },
   "severity": {
     "critical": "Crítico",
@@ -211,6 +213,7 @@
     "departureRequired": "Informe a data de saída.",
     "departureBeforeArrival": "A saída deve ser no mesmo dia ou depois da chegada.",
     "overlap": "As datas se sobrepõem à parada em {{city}} ({{dates}}). Só o dia da troca de cidade pode ser compartilhado.",
+    "lodgingOutside": "A hospedagem {{name}} ({{dates}}) ficaria fora das novas datas. Ajuste-a antes.",
     "notes": "Observações",
     "notesTooLong": "Use no máximo 2000 caracteres.",
     "optional": "Opcional",
@@ -223,7 +226,7 @@
     "invalid": "A parada não pôde ser salva: confira as datas.",
     "conflict": "A parada foi alterada por outra pessoa. Recarregamos os dados; confira e salve de novo.",
     "deleteTitle": "Excluir a parada em {{city}}?",
-    "deleteDescription": "A parada sai do roteiro, junto com os trechos de transporte ligados a ela. Não dá para desfazer.",
+    "deleteDescription": "A parada sai do roteiro, junto com os trechos de transporte e as hospedagens ligados a ela. Não dá para desfazer.",
     "deleteConfirm": "Excluir parada",
     "deleted": "Parada excluída.",
     "deleteError": "Não foi possível excluir a parada. Tente novamente."
@@ -298,6 +301,64 @@
     "deleteConfirm": "Excluir trecho",
     "deleted": "Trecho excluído.",
     "deleteError": "Não foi possível excluir o trecho. Tente novamente."
+  },
+  "board": {
+    "ROOM_ONLY": "Só quarto",
+    "BREAKFAST": "Café da manhã",
+    "HALF_BOARD": "Meia pensão",
+    "FULL_BOARD": "Pensão completa",
+    "ALL_INCLUSIVE": "All-inclusive"
+  },
+  "lodgings": {
+    "listLabel": "Hospedagens em {{city}}",
+    "add": "Adicionar hospedagem",
+    "addAnother": "Outra hospedagem",
+    "addIn": "Adicionar hospedagem em {{city}}",
+    "edit": "Editar hospedagem: {{name}}"
+  },
+  "lodgingKind": {
+    "HOTEL": "Hotel/pousada",
+    "RENTAL": "Aluguel",
+    "FRIENDS_HOME": "Casa de amigo/parente"
+  },
+  "lodgingForm": {
+    "newTitle": "Nova hospedagem",
+    "editTitle": "Editar hospedagem",
+    "description": "Onde vocês vão dormir em {{city}}: hotel, aluguel ou casa de amigo/parente. Pode haver mais de uma hospedagem na mesma cidade.",
+    "name": "Nome",
+    "kind": "Tipo",
+    "namePlaceholder_HOTEL": "Ex.: Hotel Avenida Palace",
+    "namePlaceholder_RENTAL": "Ex.: Apartamento em Alfama",
+    "namePlaceholder_FRIENDS_HOME": "Ex.: Casa da tia Ana",
+    "address": "Endereço",
+    "dates": "Estadia",
+    "stopDates": "parada: {{dates}}",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "boardType": "Regime",
+    "boardUnknown": "Não informado",
+    "bookingRef": "Código da reserva",
+    "notes": "Observações",
+    "optional": "Opcional",
+    "nameRequired": "Informe o nome da hospedagem.",
+    "checkInRequired": "Informe a data do check-in.",
+    "checkOutRequired": "Informe a data do check-out.",
+    "checkOutBeforeCheckIn": "O check-out deve ser depois do check-in.",
+    "outsideStop": "As datas devem ficar dentro da parada ({{dates}}).",
+    "tooLong": "Texto longo demais.",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "delete": "Excluir",
+    "created": "Hospedagem adicionada.",
+    "saved": "Hospedagem salva.",
+    "saveError": "Não foi possível salvar a hospedagem. Tente novamente.",
+    "invalid": "A hospedagem não pôde ser salva: confira as datas.",
+    "conflict": "A hospedagem foi alterada por outra pessoa. Recarregamos os dados; confira e salve de novo.",
+    "deleteTitle": "Excluir a hospedagem {{name}}?",
+    "deleteDescription": "A hospedagem sai da parada. Não dá para desfazer.",
+    "deleteConfirm": "Excluir hospedagem",
+    "deleted": "Hospedagem excluída.",
+    "deleteError": "Não foi possível excluir a hospedagem. Tente novamente."
   },
   "city": {
     "searchPlaceholder": "Buscar cidade",

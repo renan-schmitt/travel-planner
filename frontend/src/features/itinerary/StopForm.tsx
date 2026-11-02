@@ -8,8 +8,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { cityErrorKey } from '@/features/places/city'
 import { CityAutocomplete } from '@/features/places/CityAutocomplete'
 import { formatDateRange } from '@/lib/dates'
-import type { Stop } from './api'
-import { findOverlap, nightsBetween, stopSchema, type StopFormValues } from './stop-form'
+import type { Lodging, Stop } from './api'
+import {
+  findLodgingOutside,
+  findOverlap,
+  nightsBetween,
+  stopSchema,
+  type StopFormValues,
+} from './stop-form'
 
 type ErrorKey = 'arrivalRequired' | 'departureRequired' | 'departureBeforeArrival' | 'notesTooLong'
 
@@ -17,6 +23,7 @@ type ErrorKey = 'arrivalRequired' | 'departureRequired' | 'departureBeforeArriva
 export function StopForm({
   initialValues,
   otherStops,
+  lodgings = [],
   submitting,
   onSubmit,
   onCancel,
@@ -25,6 +32,8 @@ export function StopForm({
   initialValues: StopFormValues
   /** Demais paradas da viagem, para avisar de sobreposição antes de salvar. */
   otherStops: Stop[]
+  /** Hospedagens da parada (ao editar): precisam continuar dentro das novas datas. */
+  lodgings?: Lodging[]
   submitting: boolean
   onSubmit: (values: StopFormValues) => void
   onCancel: () => void
@@ -38,6 +47,7 @@ export function StopForm({
     name: ['arrivalDate', 'departureDate'],
   })
   const overlap = findOverlap(arrival, departure, otherStops)
+  const outside = findLodgingOutside(arrival, departure, lodgings)
   const validRange = arrival && departure && departure >= arrival
   const nights = validRange ? nightsBetween(arrival, departure) : undefined
   const error = (key?: string) => (key ? t(`stopForm.${key as ErrorKey}`) : undefined)
@@ -47,7 +57,7 @@ export function StopForm({
       noValidate
       className="flex flex-col gap-4"
       onSubmit={form.handleSubmit((values) => {
-        if (!overlap) onSubmit(values)
+        if (!overlap && !outside) onSubmit(values)
       })}
     >
       <Controller
@@ -70,7 +80,7 @@ export function StopForm({
             id="stop-arrival"
             type="date"
             className="tabular"
-            aria-invalid={errors.arrivalDate || overlap ? true : undefined}
+            aria-invalid={errors.arrivalDate || overlap || outside ? true : undefined}
             {...form.register('arrivalDate')}
           />
         </div>
@@ -81,7 +91,7 @@ export function StopForm({
             type="date"
             className="tabular"
             min={arrival || undefined}
-            aria-invalid={errors.departureDate || overlap ? true : undefined}
+            aria-invalid={errors.departureDate || overlap || outside ? true : undefined}
             {...form.register('departureDate')}
           />
         </div>
@@ -100,6 +110,14 @@ export function StopForm({
             {t('stopForm.overlap', {
               city: overlap.cityName,
               dates: formatDateRange(overlap.arrivalDate, overlap.departureDate),
+            })}
+          </p>
+        )}
+        {outside && (
+          <p role="alert" className="col-span-2 text-sm text-destructive">
+            {t('stopForm.lodgingOutside', {
+              name: outside.name,
+              dates: formatDateRange(outside.checkIn, outside.checkOut),
             })}
           </p>
         )}

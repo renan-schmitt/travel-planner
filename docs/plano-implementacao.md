@@ -25,7 +25,7 @@
 | 6 | Viajantes (S1) | MVP | ☑ |
 | 7 | Cliente Places + paradas com autocomplete de cidade | MVP | ☑ |
 | 8 | Transporte | MVP | ☑ |
-| 9 | Hospedagem (cadastro manual) | MVP | ☐ |
+| 9 | Hospedagem (cadastro manual) | MVP | ☑ |
 | 10 | Timeline dia a dia (leitura) (S2) | MVP | ☐ |
 | 11 | Partilha: convites, papéis e link | MVP | ☐ |
 | 12 | Checklists manuais | MVP | ☐ |
@@ -529,7 +529,7 @@ Em dev, o frontend roda em `:5173`, mas o fluxo OAuth passa pelo backend em `:80
 
 **Migration `V8__lodging.sql`**
 - `lodging`:
-  - `id`, `stop_id FK CASCADE`, `place_id VARCHAR(255) NULL`, `name VARCHAR(160) NOT NULL`, `address VARCHAR(300)`;
+  - `id`, `stop_id FK CASCADE`, `kind ENUM('HOTEL','RENTAL','FRIENDS_HOME') NOT NULL DEFAULT 'HOTEL'`, `place_id VARCHAR(255) NULL`, `name VARCHAR(160) NOT NULL`, `address VARCHAR(300)`;
   - `check_in DATE NOT NULL`, `check_out DATE NOT NULL`;
   - `board_type ENUM('ROOM_ONLY','BREAKFAST','HALF_BOARD','FULL_BOARD','ALL_INCLUSIVE') NULL`;
   - `price_tier TINYINT NULL` (1–4) e `price_tier_source ENUM('PLACES','HEURISTIC','AI','USER') NULL`;
@@ -1466,3 +1466,11 @@ Fases feitas fora de ordem: usar o próximo número disponível e atualizar esta
 - **Datas derivadas:** `StopItinerary#dateSpan` junta as paradas com a data local da primeira partida e da última chegada (ou partida, sem chegada) dos trechos. O campo da resposta continua `datesFromStops` (significa "datas vindas do roteiro").
 - **Frontend:** na aba "Roteiro", os trechos que saem de casa aparecem antes da primeira parada (com o nó "Casa · <cidade de origem>"), e os locais e os que saem de uma parada, logo abaixo dela; "Casa" de novo no fim se houver volta. Cada trecho mostra ícone, rota (rótulo digitado ou, sem ele, a cidade/"Casa"), "10/03 22:40 (GMT-3) → 11/03 11:15 (GMT+0) · 9h35", companhia, código e reserva (`lib/dates`: `formatLocalDateTime`, `gmtLabel`, `formatDuration`). Formulário em *bottom sheet* (`SegmentSheet`/`SegmentForm`/`segment-form.ts`): tipo em grade de ícones (rádios), "De" com Casa, as paradas e o grupo "Trecho local em <parada>" (que esconde o "Para"), data + hora + fuso (select nativo) por ponta. Trocar a ponta sugere o fuso dela (parada ou `homeCity.timezone`; sem cidade de origem, o fuso do navegador). O cliente valida a chegada pelos fusos com `TZDate` (`@date-fns/tz`), como o backend. O novo trecho já vem com casa → primeira parada; com ida, última parada → casa; com ida e volta, a primeira parada sem trecho de saída → a seguinte. "Adicionar trecho" só aparece com pelo menos uma parada.
 - **Testes:** `SegmentDetailsTest` (6: voo noturno, "chegar antes" no relógio local, chegada antes no tempo real, chegada opcional, pontas iguais, trecho local) e `SegmentControllerIT` (6: ida/volta com voo noturno, trem e transfer + datas derivadas, datas manuais, edição/409/exclusão, validação, cascata da parada, papéis). No frontend, `Segments.test.tsx` (5), `segment-form.test.ts` e `lib/dates.test.ts`.
+
+### Fase 9
+- **Módulo:** a hospedagem ficou em `itinerary`, como os trechos (`Lodging`, `LodgingDetails`, `BoardType`, `PriceTierSource`, `LodgingService`, `LodgingController`; `LodgingRepository` em `itinerary/infra`). A tabela segue o plano (só `stop_id`, sem `trip_id`); a listagem da viagem faz a junção com `stop`. `place_id` existe mas ainda não é aceito pela API (chega na Fase 16).
+- **API:** CRUD em `/api/v1/trips/{tripId}/stops/{stopId}/lodgings` (`version` no `PUT`, 409 se divergente; parada de outra viagem → 404). **Acréscimo:** `GET /api/v1/trips/{tripId}/lodgings` lista as hospedagens de todas as paradas (por check-in), para a aba Roteiro não fazer um pedido por parada. A resposta traz `nights`. `priceTier` 1–4 (ausente = "não sei"); ao mudar a faixa a origem vira `USER`, e se ela não mudar a origem anterior é mantida (para não perder `PLACES`/`AI` no futuro).
+- **Tipo (acréscimo):** `kind` = `HOTEL` (hotel/pousada), `RENTAL` (aluguel) ou `FRIENDS_HOME` (casa de amigo/parente), obrigatório na API. Em `FRIENDS_HOME` o `LodgingDetails` descarta regime, faixa de preço e reserva, e o formulário esconde esses campos. A casa de amigo cobre a noite como qualquer hospedagem (importa para `NOITE_SEM_HOSPEDAGEM`, Fase 14). Ícones: cama, chave e aperto de mãos.
+- **Validação:** `LodgingDetails#validate`: `checkOut > checkIn` → `checkOut`; check-in antes da chegada → `checkIn`; check-out depois da saída → `checkOut` (no limite vale). **Acréscimo:** editar uma parada para datas que deixariam uma hospedagem de fora dá 400 em `arrivalDate` (o formulário da parada avisa antes de salvar). Excluir a parada exclui as hospedagens (`ON DELETE CASCADE`; o aviso de exclusão diz isso). As hospedagens não mudam as datas da viagem (ficam dentro das paradas). `TripChangedEvent` em toda alteração.
+- **Frontend:** em cada parada da aba Roteiro, as hospedagens (ícone de cama, nome, `PriceTier`, "11 – 13 de mar. · 2 noites", regime e reserva) e o botão "Adicionar hospedagem"/"Outra hospedagem" (não aparece em bate-volta). Formulário em *bottom sheet* (`LodgingSheet`/`LodgingForm`/`lodging-form.ts`): nome, endereço, check-in/check-out (limitados às datas da parada; a nova começa depois da última hospedagem da parada), regime (select), faixa de preço e reserva. O seletor `PriceTierInput` (rádios "Não sei", `$`…`$$$$`) fica em `components/` ao lado do `PriceTier` e aparece também em `/dev/ui`.
+- **Testes:** `LodgingDetailsTest` (5) e `LodgingControllerIT` (6: dois hotéis na mesma cidade + listagem da viagem, casa de amigo/parente, edição/409/exclusão, validação, datas da parada × hospedagens e cascata, papéis). No frontend, `Lodgings.test.tsx` (6) e `lodging-form.test.ts` (5).

@@ -1,8 +1,10 @@
 import { CircleAlert, Info, Lightbulb, Sparkles, TriangleAlert } from 'lucide-react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Brand } from '@/components/Brand'
-import { PriceTier } from '@/components/PriceTier'
+import { PriceTier, type PriceLevel } from '@/components/PriceTier'
+import { PriceTierInput } from '@/components/PriceTierInput'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -138,6 +140,7 @@ function ThemePanel({ title, dark = false }: { title: string; dark?: boolean }) 
             <PriceTier level={3} />
             <PriceTier level={4} />
             <PriceTier level={2} estimated />
+            <PriceTierDemo />
           </CardContent>
         </Card>
 
@@ -226,5 +229,14 @@ function ThemePanel({ title, dark = false }: { title: string; dark?: boolean }) 
         </Card>
       </div>
     </section>
+  )
+}
+
+function PriceTierDemo() {
+  const [level, setLevel] = useState<PriceLevel | null>(2)
+  return (
+    <div className="w-full max-w-xs">
+      <PriceTierInput name={useId()} value={level} onChange={setLevel} />
+    </div>
   )
 }

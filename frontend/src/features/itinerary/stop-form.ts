@@ -2,7 +2,7 @@ import { differenceInCalendarDays } from 'date-fns'
 import { z } from 'zod'
 import { emptyCity, requiredCitySchema } from '@/features/places/city'
 import { parseDate } from '@/lib/dates'
-import type { CreateStop, Stop } from './api'
+import type { CreateStop, Lodging, Stop } from './api'
 
 export const stopSchema = z
   .object({
@@ -79,4 +79,14 @@ export function findOverlap(arrival: string, departure: string, others: Stop[]):
     const earliestDeparture = departure < o.departureDate ? departure : o.departureDate
     return latestArrival < earliestDeparture
   })
+}
+
+/** Hospedagem que ficaria fora das datas da parada (check-in antes da chegada ou check-out depois da saída). */
+export function findLodgingOutside(
+  arrival: string,
+  departure: string,
+  lodgings: Lodging[],
+): Lodging | undefined {
+  if (!arrival || !departure || departure < arrival) return undefined
+  return lodgings.find((l) => l.checkIn < arrival || l.checkOut > departure)
 }

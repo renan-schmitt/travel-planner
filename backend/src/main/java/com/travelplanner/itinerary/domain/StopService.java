@@ -1,5 +1,6 @@
 package com.travelplanner.itinerary.domain;
 
+import com.travelplanner.itinerary.infra.LodgingRepository;
 import com.travelplanner.itinerary.infra.StopRepository;
 import com.travelplanner.shared.web.InvalidRequestException;
 import com.travelplanner.shared.web.NotFoundException;
@@ -31,6 +32,7 @@ public class StopService {
   private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("dd/MM");
 
   private final StopRepository stops;
+  private final LodgingRepository lodgings;
   private final TripAccessService access;
   private final TripService trips;
   private final ApplicationEventPublisher events;
@@ -71,6 +73,7 @@ public class StopService {
       throw new OptimisticLockingFailureException("Versão da parada divergente.");
     }
     checkOverlap(details, stops.findByTripIdOrderBySeq(tripId), stopId);
+    checkLodgings(stopId, details);
     stop.update(details);
     stops.saveAndFlush(stop);
     changed(tripId);
@@ -124,6 +127,21 @@ public class StopService {
                           o.getCityName(),
                           DAY.format(o.getArrivalDate()),
                           DAY.format(o.getDepartureDate())));
+            });
+  }
+
+  /** As hospedagens da parada precisam continuar dentro das novas datas. */
+  private void checkLodgings(long stopId, StopDetails details) {
+    lodgings.findByStopIdOrderByCheckInAscIdAsc(stopId).stream()
+        .filter(l -> !l.details().fitsIn(details.arrivalDate(), details.departureDate()))
+        .findFirst()
+        .ifPresent(
+            l -> {
+              throw new InvalidRequestException(
+                  "arrivalDate",
+                  "A hospedagem %s (%s a %s) ficaria fora das novas datas. Ajuste-a antes."
+                      .formatted(
+                          l.getName(), DAY.format(l.getCheckIn()), DAY.format(l.getCheckOut())));
             });
   }
 
