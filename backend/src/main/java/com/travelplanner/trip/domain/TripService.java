@@ -157,7 +157,7 @@ public class TripService {
   }
 
   /** "Hoje" no fuso da cidade de origem do usuário (ou no fuso padrão, se não houver). */
-  private LocalDate today(long userId) {
+  public LocalDate today(long userId) {
     HomeCity home = users.get(userId).getHomeCity();
     ZoneId zone =
         home != null && home.timezone() != null

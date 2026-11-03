@@ -26,7 +26,34 @@
   },
   "dashboard": {
     "title": "Início",
-    "empty": "Suas próximas viagens e pendências vão aparecer aqui."
+    "loadError": "Não foi possível carregar o início. Tente recarregar a página.",
+    "emptyTitle": "Planeje sua primeira viagem",
+    "empty": "Monte o roteiro e a gente aponta o que está faltando: transfer, hospedagem, documentos.",
+    "newTrip": "Nova viagem",
+    "alerts": "Alertas",
+    "noAlerts": "Nenhum prazo nos próximos 14 dias. Tudo em dia!",
+    "upcoming": "Próximas viagens",
+    "noUpcoming": "Nenhuma viagem pela frente.",
+    "past_one": "Viagem passada ({{count}})",
+    "past_other": "Viagens passadas ({{count}})",
+    "checklist": "Checklist: {{done}} de {{total}}",
+    "checklistEmpty": "Checklist vazio",
+    "checklistProgress": "Progresso do checklist",
+    "pending": {
+      "CRITICAL_one": "{{count}} crítica",
+      "CRITICAL_other": "{{count}} críticas",
+      "WARNING_one": "{{count}} atenção",
+      "WARNING_other": "{{count}} atenção",
+      "INFO_one": "{{count}} dica",
+      "INFO_other": "{{count}} dicas"
+    },
+    "due": {
+      "overdue_one": "Venceu há {{count}} dia",
+      "overdue_other": "Venceu há {{count}} dias",
+      "today": "Vence hoje",
+      "tomorrow": "Vence amanhã",
+      "inDays": "Vence em {{count}} dias"
+    }
   },
   "trips": {
     "title": "Viagens",

@@ -516,6 +516,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/dashboard': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['getDashboard']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/share-links/{linkId}': {
     parameters: {
       query?: never
@@ -1195,6 +1211,84 @@ export interface components {
       placeId: string
       name: string
       description?: string
+    }
+    AlertResponse: {
+      /** @enum {string} */
+      kind: 'CHECKLIST_ITEM' | 'SUGGESTION'
+      /** Format: int64 */
+      tripId: number
+      tripName: string
+      /** @enum {string} */
+      severity: 'INFO' | 'WARNING' | 'CRITICAL'
+      /** Format: date */
+      date?: string
+      overdue: boolean
+      checklistItem?: components['schemas']['ChecklistItemAlert']
+      suggestion?: components['schemas']['SuggestionAlert']
+    }
+    ChecklistItemAlert: {
+      /** Format: int64 */
+      id: number
+      /** @enum {string} */
+      category: 'DOCUMENTS' | 'BOOKINGS' | 'PACKING' | 'HOME' | 'HEALTH' | 'MONEY' | 'OTHER'
+      title: string
+    }
+    DashboardResponse: {
+      upcomingTrips: components['schemas']['UpcomingTripResponse'][]
+      alerts: components['schemas']['AlertResponse'][]
+      pastTrips: components['schemas']['PastTripResponse'][]
+    }
+    PastTripResponse: {
+      /** Format: int64 */
+      id: number
+      name: string
+      /** Format: date */
+      startDate?: string
+      /** Format: date */
+      endDate?: string
+      coverColor?: string
+      /** Format: int32 */
+      destinationCount: number
+    }
+    PendingSuggestions: {
+      /** Format: int32 */
+      critical: number
+      /** Format: int32 */
+      warning: number
+      /** Format: int32 */
+      info: number
+    }
+    SuggestionAlert: {
+      /** Format: int64 */
+      id: number
+      ruleCode: string
+      logicalKey: string
+      params: {
+        [key: string]: unknown
+      }
+    }
+    UpcomingTripResponse: {
+      /** Format: int64 */
+      id: number
+      name: string
+      /** Format: date */
+      startDate?: string
+      /** Format: date */
+      endDate?: string
+      /** @enum {string} */
+      status: 'PLANNING' | 'CONFIRMED' | 'IN_PROGRESS' | 'DONE'
+      coverColor?: string
+      /** @enum {string} */
+      role: 'VIEWER' | 'EDITOR' | 'OWNER'
+      /** Format: int32 */
+      destinationCount: number
+      /** Format: int32 */
+      daysUntilStart?: number
+      /** Format: int32 */
+      checklistDone: number
+      /** Format: int32 */
+      checklistTotal: number
+      pendingSuggestions: components['schemas']['PendingSuggestions']
     }
   }
   responses: never
@@ -2460,6 +2554,26 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['CitySuggestionResponse'][]
+        }
+      }
+    }
+  }
+  getDashboard: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['DashboardResponse']
         }
       }
     }
