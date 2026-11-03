@@ -56,7 +56,9 @@
       "VIEWER": "Leitor"
     },
     "destinations_one": "{{count}} destino",
-    "destinations_other": "{{count}} destinos"
+    "destinations_other": "{{count}} destinos",
+    "pendingSuggestions_one": "{{count}} sugestão pendente",
+    "pendingSuggestions_other": "{{count}} sugestões pendentes"
   },
   "profile": {
     "title": "Perfil",
@@ -226,7 +228,8 @@
     "sleepInTransit": "Dormir: em trânsito ({{segment}})",
     "sleepHome": "Dormir: em casa",
     "sleepMissing": "Sem hospedagem para esta noite",
-    "sleepMissingHint": "Cadastre uma hospedagem na aba Roteiro."
+    "sleepMissingHint": "Cadastre uma hospedagem na aba Roteiro.",
+    "seeSuggestion": "Ver sugestão"
   },
   "stopForm": {
     "newTitle": "Nova parada",
@@ -672,5 +675,94 @@
     "CAR": "Carro",
     "BRIEFCASE": "Trabalho",
     "LIST": "Lista"
+  },
+  "suggestions": {
+    "title": "Sugestões",
+    "hint": "O que ainda falta na viagem. Elas somem sozinhas quando você cadastra o que faltava.",
+    "empty": "Nenhuma lacuna encontrada. Tudo certo por aqui!",
+    "loadError": "Não foi possível carregar as sugestões.",
+    "saveError": "Não foi possível salvar. Tente de novo.",
+    "pendingList": "Sugestões pendentes",
+    "pendingBadge_one": "{{count}} sugestão pendente",
+    "pendingBadge_other": "{{count}} sugestões pendentes",
+    "unknown": "Sugestão",
+    "severity": {
+      "CRITICAL": "Crítico",
+      "WARNING": "Atenção",
+      "INFO": "Dica"
+    },
+    "status": {
+      "PENDING": "Pendente",
+      "SNOOZED": "Adiada até {{date}}",
+      "ACCEPTED": "Aceita",
+      "DISMISSED": "Dispensada"
+    },
+    "resolve": {
+      "segment": "Adicionar trecho",
+      "lodging": "Adicionar hospedagem",
+      "travelers": "Ver viajantes",
+      "checklist": "Ver checklist",
+      "accept": "Adicionar ao checklist"
+    },
+    "links": {
+      "uber": "Uber",
+      "bookingTaxi": "Transfer no Booking"
+    },
+    "checklistAdded": "Item no checklist: “{{title}}”.",
+    "checklistOnAccept": "Ao aceitar, entra no checklist: “{{title}}”.",
+    "snooze": "Adiar",
+    "dismiss": "Dispensar",
+    "restore": "Restaurar",
+    "accepted": "Sugestão aceita.",
+    "dismissed": "Sugestão dispensada. Ela não volta.",
+    "snoozed": "Adiada até {{date}}.",
+    "snoozeTitle": "Adiar sugestão",
+    "snoozeDescription": "Ela some da lista e volta na data escolhida.",
+    "snoozeUntil": "Voltar a mostrar em",
+    "snoozeConfirm": "Adiar",
+    "showOthers_one": "Ver {{count}} adiada ou resolvida",
+    "showOthers_other": "Ver {{count}} adiadas ou resolvidas",
+    "hideOthers_one": "Esconder adiada ou resolvida",
+    "hideOthers_other": "Esconder adiadas ou resolvidas",
+    "rules": {
+      "TRANSFER_CHEGADA": {
+        "title": "Como vai do aeroporto em {{city}}?",
+        "description": "O voo {{flight}} chega em {{when}} e não há transfer nem trecho saindo de lá nas 6 horas seguintes."
+      },
+      "TRANSFER_SAIDA": {
+        "title": "Como vai ao aeroporto em {{city}}?",
+        "titleHome": "Como vai de casa ao aeroporto?",
+        "description": "O voo {{flight}} sai em {{when}} e não há trecho chegando ao aeroporto nas 8 horas antes."
+      },
+      "NOITE_SEM_HOSPEDAGEM": {
+        "title": "Noite de {{date}} em {{city}} sem hospedagem",
+        "titleNoCity": "Noite de {{date}} sem hospedagem",
+        "description": "Cadastre onde vão dormir: hotel, aluguel ou casa de alguém."
+      },
+      "DESTINO_SEM_TRANSPORTE": {
+        "title": "Como vai de {{from}} a {{to}}?",
+        "description": "Não há trecho cadastrado de {{from}} para {{to}}."
+      },
+      "TRANSPORTE_LOCAL": {
+        "title": "Como vão se locomover em {{city}}?",
+        "description_one": "{{count}} noite sem aluguel de carro. Se vão de transporte público ou aplicativo, dispense.",
+        "description_other": "{{count}} noites sem aluguel de carro. Se vão de transporte público ou aplicativo, dispense."
+      },
+      "CHECKIN_ONLINE": {
+        "title": "Check-in online do voo {{flight}}",
+        "description": "O voo sai em {{when}}. O check-in costuma abrir 24 a 48 horas antes."
+      },
+      "PASSAPORTE_VALIDADE": {
+        "titleMissing": "Informe a validade do passaporte de {{name}}",
+        "descriptionMissing": "Viagem internacional: muitos países exigem passaporte válido por 6 meses depois da volta.",
+        "titleExpiring": "Passaporte de {{name}} vence em {{expiry}}",
+        "descriptionExpiring": "Ele precisa valer até {{limit}} (6 meses depois da volta)."
+      },
+      "SEGURO_VIAGEM": {
+        "title": "Contratar seguro viagem",
+        "descriptionSchengen": "Obrigatório nos países do espaço Schengen (cobertura mínima de 30 mil euros).",
+        "description": "Em viagem internacional, o seguro cobre despesas médicas e imprevistos."
+      }
+    }
   }
 }

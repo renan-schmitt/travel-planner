@@ -39,14 +39,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChecklistTab } from '@/features/checklist/ChecklistTab'
 import { ItineraryTab } from '@/features/itinerary/ItineraryTab'
 import { TimelineTab } from '@/features/itinerary/TimelineTab'
+import { pendingCount, useSuggestions } from '@/features/suggestions/api'
+import { SuggestionsTab } from '@/features/suggestions/SuggestionsTab'
 import { TripPeopleTab } from '@/features/travelers/TripPeopleTab'
 import { hasRole, useDeleteTrip, useTrip, type Trip } from './api'
 import { defaultTripColor } from './trip-colors'
 import { TripDates } from './TripDates'
 import { TripStatusBadge } from './TripStatusBadge'
-
-type TabKey =
-  'itinerary' | 'timeline' | 'checklist' | 'packing' | 'suggestions' | 'attachments' | 'people'
+import { useTripTab, type TabKey } from './trip-tabs'
 
 /** Abas da viagem; cada uma é preenchida numa fase seguinte do plano. */
 const tabs: { key: TabKey; icon: LucideIcon }[] = [
@@ -67,12 +67,20 @@ export function TripPage() {
 
   if (error) return <TripNotFound />
   if (!trip) return <p className="py-8 text-center text-muted-foreground">{t('common.loading')}</p>
+  return <TripTabs trip={trip} />
+}
+
+function TripTabs({ trip }: { trip: Trip }) {
+  const { t } = useTranslation()
+  // Durante a viagem, a timeline é a tela principal (ESP §6.3).
+  const { tab, goTo } = useTripTab(trip.status === 'IN_PROGRESS' ? 'timeline' : 'itinerary')
+  const { data: suggestions } = useSuggestions(trip.id)
+  const pending = pendingCount(suggestions)
 
   return (
     <>
       <TripHeader trip={trip} />
-      {/* Durante a viagem, a timeline é a tela principal (ESP §6.3). */}
-      <Tabs defaultValue={trip.status === 'IN_PROGRESS' ? 'timeline' : 'itinerary'}>
+      <Tabs value={tab} onValueChange={(value) => goTo(value as TabKey)}>
         {/* Rola na horizontal no celular; as abas não cabem em 360 px. */}
         <div className="-mx-4 [scrollbar-width:none] overflow-x-auto px-4">
           <TabsList variant="line" className="h-11 w-max">
@@ -80,6 +88,14 @@ export function TripPage() {
               <TabsTrigger key={key} value={key} className="h-full px-3">
                 <Icon strokeWidth={1.75} aria-hidden />
                 {t(`trip.tabs.${key}`)}
+                {key === 'suggestions' && pending > 0 && (
+                  <span
+                    className="ml-0.5 min-w-5 rounded-full bg-warning-soft px-1.5 text-xs font-semibold text-warning-foreground tabular"
+                    aria-label={t('suggestions.pendingBadge', { count: pending })}
+                  >
+                    {pending}
+                  </span>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -92,6 +108,8 @@ export function TripPage() {
               <TimelineTab trip={trip} />
             ) : key === 'checklist' ? (
               <ChecklistTab trip={trip} />
+            ) : key === 'suggestions' ? (
+              <SuggestionsTab trip={trip} />
             ) : key === 'people' ? (
               <TripPeopleTab trip={trip} />
             ) : (

@@ -14,6 +14,9 @@ public interface ChecklistItemRepository extends JpaRepository<ChecklistItem, Lo
 
   Optional<ChecklistItem> findByIdAndTripId(Long id, Long tripId);
 
+  Optional<ChecklistItem> findByTripIdAndRuleCodeAndRuleKey(
+      Long tripId, String ruleCode, String ruleKey);
+
   @Query("select coalesce(max(i.sortOrder), -1) from ChecklistItem i where i.tripId = :tripId")
   int maxSortOrder(Long tripId);
 

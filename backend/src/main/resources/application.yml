@@ -57,6 +57,10 @@ app:
     # Chave restrita à "Places API (New)". Sem ela, a busca de cidades responde 503 e o usuário
     # digita a cidade à mão.
     api-key: ${PLACES_API_KEY:}
+  suggestions:
+    # Recalcula as sugestões das viagens não encerradas quando o backend sobe (em segundo plano):
+    # cobre viagens criadas antes do motor e as regras que dependem da data até o job diário.
+    reconcile-on-startup: ${APP_SUGGESTIONS_RECONCILE_ON_STARTUP:true}
 
 # OpenAPI só nos perfis local e test.
 springdoc:

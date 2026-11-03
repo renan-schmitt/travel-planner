@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 /**
  * Item da listagem. {@code status} é o efetivo (inclui {@code IN_PROGRESS}/{@code DONE}); {@code
- * destinationCount} é o número de paradas.
+ * destinationCount} é o número de paradas; {@code pendingSuggestions}, o de sugestões pendentes.
  */
 public record TripSummaryResponse(
     @NotNull Long id,
@@ -19,7 +19,8 @@ public record TripSummaryResponse(
     @NotNull TripStatus status,
     String coverColor,
     @NotNull TripRole role,
-    @NotNull Integer destinationCount) {
+    @NotNull Integer destinationCount,
+    @NotNull Integer pendingSuggestions) {
 
   static TripSummaryResponse from(TripView view) {
     Trip trip = view.trip();
@@ -31,6 +32,7 @@ public record TripSummaryResponse(
         view.status(),
         trip.getCoverColor(),
         view.role(),
-        view.destinationCount());
+        view.destinationCount(),
+        view.pendingSuggestions());
   }
 }

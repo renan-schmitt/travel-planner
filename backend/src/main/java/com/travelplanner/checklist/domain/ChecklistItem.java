@@ -70,6 +70,20 @@ public class ChecklistItem extends BaseEntity {
     update(details);
   }
 
+  /** Item criado por uma regra do motor de lacunas, identificado por (regra, chave). */
+  public static ChecklistItem fromRule(
+      Long tripId, String ruleCode, String ruleKey, ChecklistItemDetails details, int sortOrder) {
+    ChecklistItem item = new ChecklistItem(tripId, ChecklistSource.RULE, details, sortOrder);
+    item.ruleCode = ruleCode;
+    item.ruleKey = ruleKey;
+    return item;
+  }
+
+  /** Muda só o prazo (a regra recalculou; título, notas e responsável são do usuário). */
+  public void reschedule(LocalDate dueDate) {
+    this.dueDate = dueDate;
+  }
+
   public void update(ChecklistItemDetails details) {
     this.category = details.category();
     this.title = details.title();

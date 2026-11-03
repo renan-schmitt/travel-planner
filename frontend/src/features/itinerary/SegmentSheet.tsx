@@ -37,6 +37,7 @@ export function SegmentSheet({
   segments,
   segment,
   homeTz,
+  preset,
   open,
   onOpenChange,
 }: {
@@ -45,6 +46,8 @@ export function SegmentSheet({
   segments: Segment[]
   segment?: Segment
   homeTz: string
+  /** Valores que substituem os sugeridos num trecho novo (ex.: "Resolver" de uma sugestão). */
+  preset?: Partial<SegmentFormValues>
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -77,6 +80,7 @@ export function SegmentSheet({
               stops={stops}
               segments={segments}
               homeTz={homeTz}
+              preset={preset}
               onDone={close}
             />
           )}
@@ -97,18 +101,23 @@ function NewSegment({
   stops,
   segments,
   homeTz,
+  preset,
   onDone,
 }: {
   tripId: number
   stops: Stop[]
   segments: Segment[]
   homeTz: string
+  preset?: Partial<SegmentFormValues>
   onDone: () => void
 }) {
   const { t } = useTranslation()
   const create = useCreateSegment(tripId)
   // Calculado uma vez: o formulário não deve ser reiniciado se a lista mudar enquanto está aberto.
-  const [initialValues] = useState(() => emptySegment(stops, segments, homeTz))
+  const [initialValues] = useState(() => ({
+    ...emptySegment(stops, segments, homeTz),
+    ...preset,
+  }))
 
   function onSubmit(values: SegmentFormValues) {
     create.mutate(toSegmentBody(values), {

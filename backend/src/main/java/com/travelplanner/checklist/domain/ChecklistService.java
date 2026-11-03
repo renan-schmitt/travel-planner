@@ -4,15 +4,18 @@ import com.travelplanner.checklist.infra.ChecklistItemRepository;
 import com.travelplanner.shared.web.InvalidRequestException;
 import com.travelplanner.shared.web.NotFoundException;
 import com.travelplanner.trip.domain.TripAccessService;
+import com.travelplanner.trip.domain.TripChangedEvent;
 import com.travelplanner.trip.domain.TripMemberRemovedEvent;
 import com.travelplanner.trip.domain.TripRole;
 import java.time.Clock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -20,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Itens de checklist da viagem. Leitura exige {@code VIEWER}; alterações, {@code EDITOR}. Itens
- * novos entram no fim da lista; a ordem é a do usuário ({@link #reorder}).
+ * novos entram no fim da lista; a ordem é a do usuário ({@link #reorder}). Criar, editar e excluir
+ * publicam {@link TripChangedEvent} (regras como {@code SEGURO_VIAGEM} olham o checklist); marcar
+ * como feito e reordenar, não.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class ChecklistService {
   private final ChecklistItemRepository items;
   private final TripAccessService access;
   private final Clock clock;
+  private final ApplicationEventPublisher events;
 
   @Transactional(readOnly = true)
   public List<ChecklistItem> list(long tripId, long userId, ChecklistFilter filter) {
@@ -42,8 +48,12 @@ public class ChecklistService {
   public ChecklistItem create(long tripId, long userId, ChecklistItemDetails details) {
     access.requireRole(tripId, userId, TripRole.EDITOR);
     checkAssignee(tripId, details);
-    return items.saveAndFlush(
-        new ChecklistItem(tripId, ChecklistSource.MANUAL, details, items.maxSortOrder(tripId) + 1));
+    ChecklistItem item =
+        items.saveAndFlush(
+            new ChecklistItem(
+                tripId, ChecklistSource.MANUAL, details, items.maxSortOrder(tripId) + 1));
+    events.publishEvent(new TripChangedEvent(tripId));
+    return item;
   }
 
   @Transactional
@@ -57,7 +67,9 @@ public class ChecklistService {
     // Manter um responsável que já saiu da viagem não é permitido; o evento de saída já o tira.
     checkAssignee(tripId, details);
     item.update(details);
-    return items.saveAndFlush(item);
+    ChecklistItem saved = items.saveAndFlush(item);
+    events.publishEvent(new TripChangedEvent(tripId));
+    return saved;
   }
 
   /**
@@ -79,6 +91,7 @@ public class ChecklistService {
     access.requireRole(tripId, userId, TripRole.EDITOR);
     items.delete(find(tripId, itemId));
     items.flush();
+    events.publishEvent(new TripChangedEvent(tripId));
   }
 
   /**
@@ -104,6 +117,40 @@ public class ChecklistService {
     }
     items.saveAllAndFlush(ordered);
     return ordered;
+  }
+
+  /**
+   * Itens da viagem para as regras do motor de lacunas. Sem verificação de acesso (processo
+   * interno).
+   */
+  @Transactional(readOnly = true)
+  public List<ChecklistItem> itemsForRules(long tripId) {
+    return items.findByTripIdOrderBySortOrderAscIdAsc(tripId);
+  }
+
+  /**
+   * Garante o item de uma regra (idempotente): cria se não existe; se existe e está aberto, só
+   * acompanha o prazo. Sem verificação de acesso e sem {@link TripChangedEvent} (quem chama é o
+   * próprio motor).
+   */
+  @Transactional
+  public ChecklistItem ensureRuleItem(
+      long tripId, String ruleCode, String ruleKey, ChecklistItemDetails details) {
+    return items
+        .findByTripIdAndRuleCodeAndRuleKey(tripId, ruleCode, ruleKey)
+        .map(
+            item -> {
+              if (item.getStatus() == ChecklistStatus.OPEN
+                  && !Objects.equals(item.getDueDate(), details.dueDate())) {
+                item.reschedule(details.dueDate());
+              }
+              return item;
+            })
+        .orElseGet(
+            () ->
+                items.save(
+                    ChecklistItem.fromRule(
+                        tripId, ruleCode, ruleKey, details, items.maxSortOrder(tripId) + 1)));
   }
 
   /** Quem sai da viagem deixa de ser responsável pelos itens dela. */

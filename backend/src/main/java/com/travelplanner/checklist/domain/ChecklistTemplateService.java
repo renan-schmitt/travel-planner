@@ -5,6 +5,7 @@ import com.travelplanner.checklist.infra.ChecklistTemplateRepository;
 import com.travelplanner.shared.web.ForbiddenException;
 import com.travelplanner.shared.web.NotFoundException;
 import com.travelplanner.trip.domain.TripAccessService;
+import com.travelplanner.trip.domain.TripChangedEvent;
 import com.travelplanner.trip.domain.TripRole;
 import java.text.Normalizer;
 import java.time.LocalDate;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ public class ChecklistTemplateService {
   private final ChecklistTemplateRepository templates;
   private final ChecklistItemRepository items;
   private final TripAccessService access;
+  private final ApplicationEventPublisher events;
 
   @Transactional(readOnly = true)
   public List<ChecklistTemplate> list(long userId) {
@@ -95,7 +98,11 @@ public class ChecklistTemplateService {
               new ChecklistItemDetails(t.getCategory(), t.getTitle(), null, due, null),
               sortOrder++));
     }
-    return new TemplateApplyResult(items.saveAllAndFlush(added), skipped);
+    List<ChecklistItem> saved = items.saveAllAndFlush(added);
+    if (!saved.isEmpty()) {
+      events.publishEvent(new TripChangedEvent(tripId));
+    }
+    return new TemplateApplyResult(saved, skipped);
   }
 
   /**

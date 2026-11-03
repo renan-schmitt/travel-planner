@@ -41,6 +41,7 @@ public class TripService {
   private final AppUserService users;
   private final TravelerService travelers;
   private final TripItinerary itinerary;
+  private final TripSuggestions suggestions;
   private final ApplicationEventPublisher events;
   private final TimeProperties timeProperties;
   private final Clock clock;
@@ -53,8 +54,9 @@ public class TripService {
   public List<TripView> list(long userId, TripScope scope) {
     LocalDate today = today(userId);
     List<TripMember> memberships = members.findAllWithTripByUserId(userId);
-    Map<Long, Integer> destinations =
-        itinerary.countDestinations(memberships.stream().map(m -> m.getTrip().getId()).toList());
+    List<Long> tripIds = memberships.stream().map(m -> m.getTrip().getId()).toList();
+    Map<Long, Integer> destinations = itinerary.countDestinations(tripIds);
+    Map<Long, Integer> pending = suggestions.countPending(tripIds, today);
     return memberships.stream()
         .map(
             m ->
@@ -62,7 +64,8 @@ public class TripService {
                     m.getTrip(),
                     m.getRole(),
                     today,
-                    destinations.getOrDefault(m.getTrip().getId(), 0)))
+                    destinations.getOrDefault(m.getTrip().getId(), 0),
+                    pending.getOrDefault(m.getTrip().getId(), 0)))
         .filter(
             v ->
                 switch (scope) {
@@ -91,7 +94,7 @@ public class TripService {
     members.save(TripMember.of(trip, userId, TripRole.OWNER, clock.instant()));
     travelers.addSelfToTrip(trip.getId(), userId);
     events.publishEvent(new TripChangedEvent(trip.getId()));
-    return view(trip, TripRole.OWNER, today(userId), 0);
+    return view(trip, TripRole.OWNER, today(userId), 0, 0);
   }
 
   /** Atualiza a viagem; {@code version} é a lida pelo cliente (divergente → 409). */
@@ -135,12 +138,22 @@ public class TripService {
   }
 
   private TripView view(Trip trip, TripRole role, LocalDate today) {
-    Map<Long, Integer> counts = itinerary.countDestinations(List.of(trip.getId()));
-    return view(trip, role, today, counts.getOrDefault(trip.getId(), 0));
+    List<Long> ids = List.of(trip.getId());
+    return view(
+        trip,
+        role,
+        today,
+        itinerary.countDestinations(ids).getOrDefault(trip.getId(), 0),
+        suggestions.countPending(ids, today).getOrDefault(trip.getId(), 0));
   }
 
-  private static TripView view(Trip trip, TripRole role, LocalDate today, int destinations) {
-    return new TripView(trip, role, trip.status(today), destinations);
+  /**
+   * {@code pending}: sugestões pendentes. Na resposta de criar/editar o número é o de antes da
+   * alteração (o motor roda depois do commit); o cliente recarrega a viagem.
+   */
+  private static TripView view(
+      Trip trip, TripRole role, LocalDate today, int destinations, int pending) {
+    return new TripView(trip, role, trip.status(today), destinations, pending);
   }
 
   /** "Hoje" no fuso da cidade de origem do usuário (ou no fuso padrão, se não houver). */
