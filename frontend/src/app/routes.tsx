@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { TemplatesPage } from '@/features/checklist/TemplatesPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { JoinPage } from '@/features/sharing/JoinPage'
@@ -42,6 +43,7 @@ export const routes: RouteObject[] = [
           { path: 'trips/:tripId/edit', element: <EditTripPage /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: 'profile/travelers', element: <TravelersPage /> },
+          { path: 'profile/templates', element: <TemplatesPage /> },
           { path: 'join/:token', element: <JoinPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],

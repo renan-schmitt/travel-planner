@@ -1,4 +1,4 @@
-import { ChevronRight, UsersRound } from 'lucide-react'
+import { ChevronRight, LayoutTemplate, UsersRound, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { themeOptions } from '@/app/theme-options'
@@ -19,24 +19,21 @@ export function ProfilePage() {
       <PageHeader title={t('profile.title')} />
       <div className="flex flex-col gap-3">
         {me && <ProfileForm me={me} />}
-        <Card className="py-0">
-          <Link
-            to="/profile/travelers"
-            className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <UsersRound className="size-5" strokeWidth={1.75} aria-hidden />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="font-medium">{t('profile.travelers')}</span>
-              <span className="text-sm text-muted-foreground">{t('profile.travelersHint')}</span>
-            </span>
-            <ChevronRight
-              className="size-5 shrink-0 text-muted-foreground"
-              strokeWidth={1.75}
-              aria-hidden
+        <Card className="gap-0 py-0">
+          <ul className="divide-y">
+            <ProfileLink
+              to="/profile/travelers"
+              icon={UsersRound}
+              title={t('profile.travelers')}
+              hint={t('profile.travelersHint')}
             />
-          </Link>
+            <ProfileLink
+              to="/profile/templates"
+              icon={LayoutTemplate}
+              title={t('profile.templates')}
+              hint={t('profile.templatesHint')}
+            />
+          </ul>
         </Card>
         <Card>
           <CardHeader>
@@ -59,5 +56,39 @@ export function ProfilePage() {
         </Card>
       </div>
     </>
+  )
+}
+
+function ProfileLink({
+  to,
+  icon: Icon,
+  title,
+  hint,
+}: {
+  to: string
+  icon: LucideIcon
+  title: string
+  hint: string
+}) {
+  return (
+    <li>
+      <Link
+        to={to}
+        className="flex min-h-14 items-center gap-3 px-4 py-3 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+          <Icon className="size-5" strokeWidth={1.75} aria-hidden />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="font-medium">{title}</span>
+          <span className="text-sm text-muted-foreground">{hint}</span>
+        </span>
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+      </Link>
+    </li>
   )
 }

@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
+import { TemplateGrid } from '@/features/checklist/TemplatePicker'
+import { applyTemplate, useTemplates } from '@/features/checklist/templates-api'
 import { ApiError } from '@/lib/api'
 import { hasRole, useCreateTrip, useTrip, useUpdateTrip, type Trip } from './api'
 import { defaultTripColor } from './trip-colors'
@@ -18,16 +21,27 @@ const emptyTrip: TripFormValues = {
   coverColor: defaultTripColor,
 }
 
-/** `/trips/new` */
+/** `/trips/new`: dados da viagem e, opcionalmente, templates de checklist para aplicar. */
 export function NewTripPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const createTrip = useCreateTrip()
+  const [templateIds, setTemplateIds] = useState<number[]>([])
+  const [applying, setApplying] = useState(false)
 
   function onSubmit(values: TripFormValues) {
     createTrip.mutate(toTripBody(values), {
-      onSuccess: (trip) => {
+      onSuccess: async (trip) => {
         toast.success(t('tripForm.created'))
+        if (templateIds.length > 0) {
+          setApplying(true)
+          try {
+            // Um de cada vez, na ordem escolhida: o seguinte não repete itens do anterior.
+            for (const id of templateIds) await applyTemplate(trip.id, id)
+          } catch {
+            toast.error(t('templates.applyError'))
+          }
+        }
         void navigate(`/trips/${trip.id}`, { replace: true })
       },
       onError: () => toast.error(t('tripForm.saveError')),
@@ -41,13 +55,45 @@ export function NewTripPage() {
         <CardContent>
           <TripForm
             initialValues={emptyTrip}
-            submitting={createTrip.isPending}
+            submitting={createTrip.isPending || applying}
             onSubmit={onSubmit}
             onCancel={() => void navigate('/trips')}
-          />
+          >
+            <TemplateChoice
+              selected={templateIds}
+              onToggle={(id) =>
+                setTemplateIds((ids) =>
+                  ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id],
+                )
+              }
+            />
+          </TripForm>
         </CardContent>
       </Card>
     </>
+  )
+}
+
+function TemplateChoice({
+  selected,
+  onToggle,
+}: {
+  selected: number[]
+  onToggle: (id: number) => void
+}) {
+  const { t } = useTranslation()
+  const { data: templates } = useTemplates()
+  if (!templates || templates.length === 0) return null
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-1 text-sm leading-none font-medium">{t('templates.onCreate')}</legend>
+      <p className="text-sm text-muted-foreground">{t('templates.onCreateHint')}</p>
+      <TemplateGrid
+        templates={templates}
+        selected={selected}
+        onPick={(template) => onToggle(template.id)}
+      />
+    </fieldset>
   )
 }
 

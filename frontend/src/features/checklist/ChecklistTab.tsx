@@ -1,4 +1,4 @@
-import { ListChecks, NotebookText, Plus } from 'lucide-react'
+import { BookmarkPlus, LayoutTemplate, ListChecks, NotebookText, Plus } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -29,7 +29,9 @@ import {
   groupByCategory,
   type ChecklistFilters,
 } from './categories'
+import { ApplyTemplateSheet } from './ApplyTemplateSheet'
 import { ChecklistItemSheet } from './ChecklistItemSheet'
+import { SaveAsTemplateDialog } from './SaveAsTemplateDialog'
 
 /**
  * Aba "Checklist": progresso no topo, filtros ("só meus", "esconder concluídos"), itens agrupados
@@ -44,6 +46,8 @@ export function ChecklistTab({ trip }: { trip: Trip }) {
   const [filters, setFilters] = useState<ChecklistFilters>({ onlyMine: false, hideDone: false })
   const [editing, setEditing] = useState<ChecklistItem>()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [saveOpen, setSaveOpen] = useState(false)
 
   const byUserId = useMemo(
     () => new Map((members ?? []).filter((m) => m.userId != null).map((m) => [m.userId!, m])),
@@ -65,6 +69,22 @@ export function ChecklistTab({ trip }: { trip: Trip }) {
 
   return (
     <div className="flex flex-col gap-3">
+      {(canEdit || items.length > 0) && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {items.length > 0 && (
+            <Button type="button" variant="ghost" onClick={() => setSaveOpen(true)}>
+              <BookmarkPlus strokeWidth={1.75} aria-hidden />
+              {t('templates.saveAs')}
+            </Button>
+          )}
+          {canEdit && (
+            <Button type="button" variant="outline" onClick={() => setApplyOpen(true)}>
+              <LayoutTemplate strokeWidth={1.75} aria-hidden />
+              {t('templates.applyButton')}
+            </Button>
+          )}
+        </div>
+      )}
       {items.length === 0 ? (
         <EmptyState
           icon={ListChecks}
@@ -113,6 +133,8 @@ export function ChecklistTab({ trip }: { trip: Trip }) {
           onOpenChange={setSheetOpen}
         />
       )}
+      {canEdit && <ApplyTemplateSheet trip={trip} open={applyOpen} onOpenChange={setApplyOpen} />}
+      <SaveAsTemplateDialog trip={trip} open={saveOpen} onOpenChange={setSaveOpen} />
     </div>
   )
 }
