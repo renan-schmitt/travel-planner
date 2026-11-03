@@ -13,7 +13,9 @@ import { EmptyState } from '@/components/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { focusKey } from '@/features/suggestions/resolve'
 import type { Trip } from '@/features/trips/api'
+import { useTripTab } from '@/features/trips/trip-tabs'
 import { countryFlag } from '@/lib/countries'
 import { formatDayHeader, formatLocalDateTime, gmtLabel, todayIso } from '@/lib/dates'
 import { cn } from '@/lib/utils'
@@ -206,6 +208,7 @@ function EventRow({ event }: { event: ItineraryEvent }) {
 function Overnight({ day }: { day: ItineraryDay }) {
   const { t } = useTranslation()
   const segmentTitle = useTimelineSegmentTitle()
+  const { goTo } = useTripTab()
   const { overnight } = day
 
   if (overnight.kind === 'MISSING') {
@@ -216,6 +219,13 @@ function Overnight({ day }: { day: ItineraryDay }) {
           {t('timeline.sleepMissing')}
         </p>
         <p className="text-xs">{t('timeline.sleepMissingHint')}</p>
+        <Button
+          variant="link"
+          className="h-auto min-h-11 px-0 text-warning"
+          onClick={() => goTo('suggestions', focusKey('NOITE_SEM_HOSPEDAGEM', day.date))}
+        >
+          {t('timeline.seeSuggestion')}
+        </Button>
       </div>
     )
   }

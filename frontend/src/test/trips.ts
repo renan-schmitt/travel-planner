@@ -18,6 +18,7 @@ export const testTrip: Trip = {
   coverColor: '#7C5CC4',
   role: 'OWNER',
   destinationCount: 0,
+  pendingSuggestions: 0,
   version: 3,
 }
 
@@ -31,6 +32,7 @@ export function summaryOf(trip: Trip): TripSummary {
     coverColor: trip.coverColor,
     role: trip.role,
     destinationCount: trip.destinationCount,
+    pendingSuggestions: trip.pendingSuggestions,
   }
 }
 

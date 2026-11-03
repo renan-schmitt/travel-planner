@@ -23,6 +23,7 @@ public record TripResponse(
     String coverColor,
     @NotNull TripRole role,
     @NotNull Integer destinationCount,
+    @NotNull Integer pendingSuggestions,
     @NotNull Long version) {
 
   static TripResponse from(TripView view) {
@@ -38,6 +39,7 @@ public record TripResponse(
         trip.getCoverColor(),
         view.role(),
         view.destinationCount(),
+        view.pendingSuggestions(),
         trip.getVersion());
   }
 }

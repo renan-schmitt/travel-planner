@@ -388,6 +388,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/suggestions/{suggestionId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch: operations['updateSuggestion']
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/checklist/{itemId}/status': {
     parameters: {
       query?: never
@@ -418,6 +434,22 @@ export interface paths {
     options?: never
     head?: never
     patch: operations['updateMe']
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/suggestions': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listSuggestions']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
     trace?: never
   }
   '/api/v1/trips/{tripId}/lodgings': {
@@ -534,6 +566,8 @@ export interface components {
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
       /** Format: int32 */
       destinationCount: number
+      /** Format: int32 */
+      pendingSuggestions: number
       /** Format: int64 */
       version: number
     }
@@ -990,6 +1024,36 @@ export interface components {
         | 'LIST'
       items: components['schemas']['TemplateItemPayload'][]
     }
+    UpdateSuggestionRequest: {
+      /** @enum {string} */
+      status: 'PENDING' | 'ACCEPTED' | 'SNOOZED' | 'DISMISSED'
+      /** Format: date */
+      snoozedUntil?: string
+    }
+    ChecklistSuggestion: {
+      /** @enum {string} */
+      category: 'DOCUMENTS' | 'BOOKINGS' | 'PACKING' | 'HOME' | 'HEALTH' | 'MONEY' | 'OTHER'
+      title: string
+      /** Format: date */
+      dueDate?: string
+      automatic: boolean
+    }
+    SuggestionResponse: {
+      /** Format: int64 */
+      id: number
+      ruleCode: string
+      logicalKey: string
+      /** @enum {string} */
+      severity: 'INFO' | 'WARNING' | 'CRITICAL'
+      /** @enum {string} */
+      status: 'PENDING' | 'ACCEPTED' | 'SNOOZED' | 'DISMISSED'
+      /** Format: date */
+      snoozedUntil?: string
+      params: {
+        [key: string]: unknown
+      }
+      checklist?: components['schemas']['ChecklistSuggestion']
+    }
     ChecklistStatusRequest: {
       /** @enum {string} */
       status: 'OPEN' | 'DONE'
@@ -1033,6 +1097,8 @@ export interface components {
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
       /** Format: int32 */
       destinationCount: number
+      /** Format: int32 */
+      pendingSuggestions: number
     }
     ItineraryDayResponse: {
       /** Format: date */
@@ -2185,6 +2251,33 @@ export interface operations {
       }
     }
   }
+  updateSuggestion: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        suggestionId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSuggestionRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SuggestionResponse']
+        }
+      }
+    }
+  }
   setChecklistItemStatus: {
     parameters: {
       query?: never
@@ -2252,6 +2345,30 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['MeResponse']
+        }
+      }
+    }
+  }
+  listSuggestions: {
+    parameters: {
+      query?: {
+        status?: 'PENDING' | 'ACCEPTED' | 'SNOOZED' | 'DISMISSED'
+      }
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SuggestionResponse'][]
         }
       }
     }

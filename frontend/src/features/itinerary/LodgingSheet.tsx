@@ -35,6 +35,7 @@ export function LodgingSheet({
   stop,
   lodgings,
   lodging,
+  preset,
   open,
   onOpenChange,
 }: {
@@ -42,6 +43,8 @@ export function LodgingSheet({
   stop?: Stop
   lodgings: Lodging[]
   lodging?: Lodging
+  /** Valores que substituem os sugeridos numa hospedagem nova (ex.: "Resolver" de uma sugestão). */
+  preset?: Partial<LodgingFormValues>
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -66,7 +69,13 @@ export function LodgingSheet({
             <EditLodging tripId={tripId} stop={stop} lodging={lodging} onDone={close} />
           )}
           {stop && !lodging && (
-            <NewLodging tripId={tripId} stop={stop} lodgings={lodgings} onDone={close} />
+            <NewLodging
+              tripId={tripId}
+              stop={stop}
+              lodgings={lodgings}
+              preset={preset}
+              onDone={close}
+            />
           )}
         </div>
       </SheetContent>
@@ -84,17 +93,19 @@ function NewLodging({
   tripId,
   stop,
   lodgings,
+  preset,
   onDone,
 }: {
   tripId: number
   stop: Stop
   lodgings: Lodging[]
+  preset?: Partial<LodgingFormValues>
   onDone: () => void
 }) {
   const { t } = useTranslation()
   const create = useCreateLodging(tripId)
   // Calculado uma vez: o formulário não deve ser reiniciado se a lista mudar enquanto está aberto.
-  const [initialValues] = useState(() => emptyLodging(stop, lodgings))
+  const [initialValues] = useState(() => ({ ...emptyLodging(stop, lodgings), ...preset }))
 
   function onSubmit(values: LodgingFormValues) {
     create.mutate(

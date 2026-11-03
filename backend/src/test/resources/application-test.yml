@@ -8,6 +8,9 @@ spring:
             client-secret: test-client-secret
 
 app:
+  suggestions:
+    # Nos testes a reconciliação de inicialização é chamada diretamente (SuggestionStartupIT).
+    reconcile-on-startup: false
   auth:
     admin-emails: admin@example.com, outro-admin@example.com
 
