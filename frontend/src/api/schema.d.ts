@@ -116,6 +116,38 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/checklist/{itemId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateChecklistItem']
+    post?: never
+    delete: operations['deleteChecklistItem']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/checklist/order': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['reorderChecklist']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers/{travelerId}': {
     parameters: {
       query?: never
@@ -244,6 +276,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/checklist': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listChecklist']
+    put?: never
+    post: operations['createChecklistItem']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers': {
     parameters: {
       query?: never
@@ -274,6 +322,22 @@ export interface paths {
     options?: never
     head?: never
     patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/checklist/{itemId}/status': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch: operations['setChecklistItemStatus']
     trace?: never
   }
   '/api/v1/me': {
@@ -598,6 +662,8 @@ export interface components {
     MemberResponse: {
       /** Format: int64 */
       id: number
+      /** Format: int64 */
+      userId?: number
       email: string
       name?: string
       pictureUrl?: string
@@ -607,6 +673,46 @@ export interface components {
       me: boolean
       /** Format: int64 */
       version: number
+    }
+    UpdateChecklistItemRequest: {
+      /** Format: int64 */
+      version: number
+      /** @enum {string} */
+      category: 'DOCUMENTS' | 'BOOKINGS' | 'PACKING' | 'HOME' | 'HEALTH' | 'MONEY' | 'OTHER'
+      title: string
+      notes?: string
+      /** Format: date */
+      dueDate?: string
+      /** Format: int64 */
+      assigneeUserId?: number
+    }
+    ChecklistItemResponse: {
+      /** Format: int64 */
+      id: number
+      /** @enum {string} */
+      category: 'DOCUMENTS' | 'BOOKINGS' | 'PACKING' | 'HOME' | 'HEALTH' | 'MONEY' | 'OTHER'
+      title: string
+      notes?: string
+      /** Format: date */
+      dueDate?: string
+      /** @enum {string} */
+      status: 'OPEN' | 'DONE'
+      /** Format: date-time */
+      doneAt?: string
+      /** Format: int64 */
+      doneByUserId?: number
+      /** Format: int64 */
+      assigneeUserId?: number
+      /** @enum {string} */
+      source: 'MANUAL' | 'RULE' | 'AI' | 'TEMPLATE'
+      ruleCode?: string
+      /** Format: int32 */
+      sortOrder: number
+      /** Format: int64 */
+      version: number
+    }
+    ReorderChecklistRequest: {
+      itemIds: number[]
     }
     UpdateTravelerRequest: {
       /** Format: int64 */
@@ -711,6 +817,16 @@ export interface components {
       /** @enum {string} */
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
     }
+    ChecklistItemRequest: {
+      /** @enum {string} */
+      category: 'DOCUMENTS' | 'BOOKINGS' | 'PACKING' | 'HOME' | 'HEALTH' | 'MONEY' | 'OTHER'
+      title: string
+      notes?: string
+      /** Format: date */
+      dueDate?: string
+      /** Format: int64 */
+      assigneeUserId?: number
+    }
     TravelerRequest: {
       name: string
       /** @enum {string} */
@@ -726,6 +842,10 @@ export interface components {
       tripId: number
       /** @enum {string} */
       role: 'VIEWER' | 'EDITOR' | 'OWNER'
+    }
+    ChecklistStatusRequest: {
+      /** @enum {string} */
+      status: 'OPEN' | 'DONE'
     }
     HomeCityDto: {
       name: string
@@ -1208,6 +1328,80 @@ export interface operations {
       }
     }
   }
+  updateChecklistItem: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        itemId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateChecklistItemRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ChecklistItemResponse']
+        }
+      }
+    }
+  }
+  deleteChecklistItem: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        itemId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  reorderChecklist: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderChecklistRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ChecklistItemResponse'][]
+        }
+      }
+    }
+  }
   updateTraveler: {
     parameters: {
       query?: never
@@ -1562,6 +1756,58 @@ export interface operations {
       }
     }
   }
+  listChecklist: {
+    parameters: {
+      query?: {
+        category?: 'DOCUMENTS' | 'BOOKINGS' | 'PACKING' | 'HOME' | 'HEALTH' | 'MONEY' | 'OTHER'
+        status?: 'OPEN' | 'DONE'
+        assignee?: string
+      }
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ChecklistItemResponse'][]
+        }
+      }
+    }
+  }
+  createChecklistItem: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChecklistItemRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ChecklistItemResponse']
+        }
+      }
+    }
+  }
   listTravelers: {
     parameters: {
       query?: never
@@ -1624,6 +1870,33 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['JoinResponse']
+        }
+      }
+    }
+  }
+  setChecklistItemStatus: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        itemId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChecklistStatusRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ChecklistItemResponse']
         }
       }
     }

@@ -3,6 +3,7 @@ import type { Member, ShareLink } from '@/features/sharing/api'
 
 export const ownerMember: Member = {
   id: 10,
+  userId: 1,
   email: 'ana@example.com',
   name: 'Ana Souza',
   role: 'OWNER',
@@ -13,6 +14,7 @@ export const ownerMember: Member = {
 
 export const editorMember: Member = {
   id: 11,
+  userId: 2,
   email: 'beatriz@example.com',
   name: 'Beatriz',
   role: 'EDITOR',

@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ChecklistTab } from '@/features/checklist/ChecklistTab'
 import { ItineraryTab } from '@/features/itinerary/ItineraryTab'
 import { TimelineTab } from '@/features/itinerary/TimelineTab'
 import { TripPeopleTab } from '@/features/travelers/TripPeopleTab'
@@ -89,6 +90,8 @@ export function TripPage() {
               <ItineraryTab trip={trip} />
             ) : key === 'timeline' ? (
               <TimelineTab trip={trip} />
+            ) : key === 'checklist' ? (
+              <ChecklistTab trip={trip} />
             ) : key === 'people' ? (
               <TripPeopleTab trip={trip} />
             ) : (
