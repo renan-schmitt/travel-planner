@@ -35,4 +35,10 @@ public class TripAccessService {
     }
     return member;
   }
+
+  /** Se o usuário é membro (com conta) da viagem, com qualquer papel. Sem exceção. */
+  @Transactional(readOnly = true)
+  public boolean isMember(long tripId, long userId) {
+    return members.findByTripIdAndUserId(tripId, userId).isPresent();
+  }
 }

@@ -8,10 +8,12 @@ import jakarta.validation.constraints.NotNull;
 
 /**
  * Membro da viagem. {@code pending}: convite ainda não aceito (sem conta vinculada; só {@code
- * email}). {@code me}: é quem pede.
+ * email}; {@code userId} nulo). {@code me}: é quem pede. {@code userId} identifica a pessoa em
+ * outros recursos (ex.: responsável de um item de checklist).
  */
 public record MemberResponse(
     @NotNull Long id,
+    Long userId,
     @NotNull String email,
     String name,
     String pictureUrl,
@@ -25,6 +27,7 @@ public record MemberResponse(
     AppUser user = view.user();
     return new MemberResponse(
         member.getId(),
+        member.getUserId(),
         user != null ? user.getEmail() : member.getInviteEmail(),
         user != null ? user.getName() : null,
         user != null ? user.getPictureUrl() : null,

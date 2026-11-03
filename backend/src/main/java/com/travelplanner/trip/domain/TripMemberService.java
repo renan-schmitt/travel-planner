@@ -16,6 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class TripMemberService {
   private final TripAccessService access;
   private final AppUserService users;
   private final Clock clock;
+  private final ApplicationEventPublisher events;
 
   @Transactional(readOnly = true)
   public List<MemberView> list(long tripId, long userId) {
@@ -128,6 +130,9 @@ public class TripMemberService {
       throw new ConflictException("A viagem precisa de pelo menos um dono.");
     }
     members.delete(member);
+    if (member.getUserId() != null) {
+      events.publishEvent(new TripMemberRemovedEvent(tripId, member.getUserId()));
+    }
   }
 
   /**
