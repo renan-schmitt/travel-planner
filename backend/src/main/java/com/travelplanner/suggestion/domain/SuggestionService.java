@@ -7,8 +7,12 @@ import com.travelplanner.suggestion.infra.SuggestionRepository;
 import com.travelplanner.trip.domain.TripAccessService;
 import com.travelplanner.trip.domain.TripRole;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +48,37 @@ public class SuggestionService {
         .map(s -> view(s, today))
         .filter(v -> status == null || v.status() == status)
         .sorted(ORDER)
+        .toList();
+  }
+
+  /**
+   * Pendentes por viagem e severidade, numa só consulta (viagens sem pendências ficam fora). Sem
+   * verificação de acesso: quem chama já sabe que o usuário é membro das viagens.
+   */
+  @Transactional(readOnly = true)
+  public Map<Long, Map<Severity, Integer>> countPendingBySeverity(
+      Collection<Long> tripIds, LocalDate today) {
+    Map<Long, Map<Severity, Integer>> result = new HashMap<>();
+    if (tripIds.isEmpty()) {
+      return result;
+    }
+    for (Object[] row : suggestions.countPendingBySeverity(tripIds, today)) {
+      result
+          .computeIfAbsent((Long) row[0], id -> new EnumMap<>(Severity.class))
+          .put((Severity) row[1], ((Number) row[2]).intValue());
+    }
+    return result;
+  }
+
+  /** Pendentes (efetivas hoje) de uma severidade nas viagens. Sem verificação de acesso. */
+  @Transactional(readOnly = true)
+  public List<SuggestionView> pending(
+      Collection<Long> tripIds, Severity severity, LocalDate today) {
+    if (tripIds.isEmpty()) {
+      return List.of();
+    }
+    return suggestions.findPendingBySeverity(tripIds, severity, today).stream()
+        .map(s -> view(s, today))
         .toList();
   }
 

@@ -7,11 +7,12 @@ export function createQueryClient() {
     },
     // Qualquer alteração (roteiro, viajantes, checklist...) pode abrir ou fechar lacunas: o motor
     // roda no backend antes da resposta, então basta recarregar as sugestões e as contagens dos
-    // cards. Sem `await`, para não atrasar o `onSuccess` de quem chamou.
+    // cards e do dashboard. Sem `await`, para não atrasar o `onSuccess` de quem chamou.
     mutationCache: new MutationCache({
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: ['trips', 'suggestions'] })
         void queryClient.invalidateQueries({ queryKey: ['trips', 'list'] })
+        void queryClient.invalidateQueries({ queryKey: ['trips', 'dashboard'] })
       },
     }),
   })

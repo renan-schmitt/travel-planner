@@ -37,7 +37,7 @@ function flightLabel(t: TFunction, params: Params): string {
  */
 export function suggestionText(
   t: TFunction,
-  s: Suggestion,
+  s: Pick<Suggestion, 'ruleCode' | 'params'>,
 ): { title: string; description: string } {
   const p = s.params
   const home = t('segments.home')

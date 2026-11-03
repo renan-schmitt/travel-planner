@@ -8,6 +8,9 @@ import com.travelplanner.trip.domain.TripChangedEvent;
 import com.travelplanner.trip.domain.TripMemberRemovedEvent;
 import com.travelplanner.trip.domain.TripRole;
 import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -126,6 +129,35 @@ public class ChecklistService {
   @Transactional(readOnly = true)
   public List<ChecklistItem> itemsForRules(long tripId) {
     return items.findByTripIdOrderBySortOrderAscIdAsc(tripId);
+  }
+
+  /** Progresso do checklist: total de itens e quantos estão feitos. */
+  public record Progress(int total, int done) {}
+
+  /**
+   * Progresso por viagem, numa só consulta (viagens sem itens ficam fora do mapa). Sem verificação
+   * de acesso: quem chama já sabe que o usuário é membro das viagens.
+   */
+  @Transactional(readOnly = true)
+  public Map<Long, Progress> progress(Collection<Long> tripIds) {
+    Map<Long, Progress> result = new HashMap<>();
+    if (tripIds.isEmpty()) {
+      return result;
+    }
+    for (Object[] row : items.countProgress(tripIds)) {
+      result.put(
+          (Long) row[0], new Progress(((Number) row[1]).intValue(), ((Number) row[2]).intValue()));
+    }
+    return result;
+  }
+
+  /**
+   * Itens abertos das viagens com prazo até {@code until} (inclusive, com os vencidos), por prazo.
+   * Sem verificação de acesso, como {@link #progress}.
+   */
+  @Transactional(readOnly = true)
+  public List<ChecklistItem> openDueUntil(Collection<Long> tripIds, LocalDate until) {
+    return tripIds.isEmpty() ? List.of() : items.findOpenDueUntil(tripIds, until);
   }
 
   /**

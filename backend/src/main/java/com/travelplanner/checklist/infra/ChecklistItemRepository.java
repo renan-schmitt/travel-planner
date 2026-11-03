@@ -2,6 +2,8 @@ package com.travelplanner.checklist.infra;
 
 import com.travelplanner.checklist.domain.ChecklistItem;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +21,20 @@ public interface ChecklistItemRepository extends JpaRepository<ChecklistItem, Lo
 
   @Query("select coalesce(max(i.sortOrder), -1) from ChecklistItem i where i.tripId = :tripId")
   int maxSortOrder(Long tripId);
+
+  /** Por viagem: total de itens e quantos estão feitos (viagens sem itens ficam fora). */
+  @Query(
+      "select i.tripId, count(i), sum(case when i.status ="
+          + " com.travelplanner.checklist.domain.ChecklistStatus.DONE then 1 else 0 end)"
+          + " from ChecklistItem i where i.tripId in :tripIds group by i.tripId")
+  List<Object[]> countProgress(Collection<Long> tripIds);
+
+  /** Itens abertos com prazo até {@code until} (inclusive; os vencidos também), por prazo. */
+  @Query(
+      "select i from ChecklistItem i where i.tripId in :tripIds and i.status ="
+          + " com.travelplanner.checklist.domain.ChecklistStatus.OPEN and i.dueDate <= :until"
+          + " order by i.dueDate, i.id")
+  List<ChecklistItem> findOpenDueUntil(Collection<Long> tripIds, LocalDate until);
 
   /** Tira o responsável dos itens da viagem (quando ele sai dela). */
   @Modifying(flushAutomatically = true)
