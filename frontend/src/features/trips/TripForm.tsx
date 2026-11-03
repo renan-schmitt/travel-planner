@@ -17,6 +17,7 @@ export function TripForm({
   submitting,
   onSubmit,
   onCancel,
+  children,
 }: {
   initialValues: TripFormValues
   /** As datas atuais vêm do roteiro (os campos começam vazios). */
@@ -24,6 +25,8 @@ export function TripForm({
   submitting: boolean
   onSubmit: (values: TripFormValues) => void
   onCancel: () => void
+  /** Campos extras antes dos botões (ex.: templates na criação). */
+  children?: React.ReactNode
 }) {
   const { t } = useTranslation()
   const form = useForm({ resolver: zodResolver(tripSchema), values: initialValues })
@@ -115,6 +118,8 @@ export function TripForm({
           ))}
         </div>
       </fieldset>
+
+      {children}
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
