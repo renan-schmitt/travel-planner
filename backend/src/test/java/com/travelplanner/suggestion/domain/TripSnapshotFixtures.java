@@ -15,6 +15,10 @@ import com.travelplanner.itinerary.domain.TripSnapshot.SavedPlaceEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.SegmentEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.TravelerEntry;
+import com.travelplanner.requirements.domain.CountryInfo;
+import com.travelplanner.requirements.domain.PublishedRequirement;
+import com.travelplanner.requirements.domain.RequirementType;
+import com.travelplanner.requirements.domain.RequirementsData;
 import com.travelplanner.trip.domain.AgeGroup;
 import com.travelplanner.trip.domain.TravelerDetails;
 import java.time.Clock;
@@ -23,7 +27,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Builder de {@link TripSnapshot}/{@link GapContext} para os testes das regras. Casa padrão: São
@@ -47,6 +54,16 @@ public class TripSnapshotFixtures {
   private final List<TravelerEntry> travelers = new ArrayList<>();
   private final List<SavedPlaceEntry> savedPlaces = new ArrayList<>();
   private final List<GapContext.ChecklistEntry> checklist = new ArrayList<>();
+  private final List<PublishedRequirement> requirements = new ArrayList<>();
+
+  static final Set<String> SCHENGEN =
+      Set.of(
+          "AT", "BE", "BG", "CH", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IS",
+          "IT", "LI", "LT", "LU", "LV", "MT", "NL", "NO", "PL", "PT", "RO", "SE", "SI", "SK");
+  static final Set<String> BR_ID_CARD =
+      Set.of("BR", "AR", "UY", "PY", "CL", "BO", "PE", "CO", "EC", "VE");
+  static final Map<String, String> NAMES =
+      Map.of("DO", "República Dominicana", "PT", "Portugal", "US", "Estados Unidos");
 
   public static TripSnapshotFixtures trip() {
     return new TripSnapshotFixtures();
@@ -262,7 +279,54 @@ public class TripSnapshotFixtures {
         List.of());
   }
 
+  /** Requisito publicado do país (verificado em {@code verifiedAt}, ou nulo). */
+  public PublishedRequirement requirement(
+      String country,
+      String nationality,
+      RequirementType type,
+      String title,
+      Integer leadDays,
+      String verifiedAt) {
+    PublishedRequirement requirement =
+        new PublishedRequirement(
+            nextId++,
+            country,
+            nationality,
+            type,
+            title,
+            "Descrição de " + title,
+            leadDays,
+            "https://oficial.example/" + country,
+            verifiedAt == null ? null : LocalDate.parse(verifiedAt));
+    requirements.add(requirement);
+    return requirement;
+  }
+
+  /** Cadastro {@code country} dos países das paradas (Schengen e RG como no seed). */
+  private Map<String, CountryInfo> countries() {
+    Map<String, CountryInfo> countries = new HashMap<>();
+    for (StopEntry stop : stops) {
+      String code = stop.details().countryCode();
+      countries.put(
+          code,
+          new CountryInfo(
+              code,
+              NAMES.getOrDefault(code, code),
+              "",
+              null,
+              null,
+              null,
+              SCHENGEN.contains(code),
+              BR_ID_CARD.contains(code)));
+    }
+    return countries;
+  }
+
   public GapContext context() {
-    return new GapContext(snapshot(), Clock.fixed(now, ZoneOffset.UTC), checklist);
+    return new GapContext(
+        snapshot(),
+        Clock.fixed(now, ZoneOffset.UTC),
+        checklist,
+        new RequirementsData(countries(), requirements));
   }
 }

@@ -212,6 +212,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/admin/requirements/{id}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['getRequirement']
+    put: operations['updateRequirement']
+    post?: never
+    delete: operations['deleteRequirement']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/dev/login': {
     parameters: {
       query?: never
@@ -452,6 +468,54 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/admin/requirements': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listRequirements']
+    put?: never
+    post: operations['createRequirement']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/requirements/{id}/unpublish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['unpublishRequirement']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/admin/requirements/{id}/publish': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['publishRequirement']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/suggestions/{suggestionId}': {
     parameters: {
       query?: never
@@ -580,6 +644,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/requirements': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listTripRequirements']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/lodgings': {
     parameters: {
       query?: never
@@ -668,6 +748,22 @@ export interface paths {
       cookie?: never
     }
     get: operations['getDashboard']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/countries': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listCountries']
     put?: never
     post?: never
     delete?: never
@@ -1069,6 +1165,56 @@ export interface components {
       /** Format: int64 */
       version: number
     }
+    UpdateRequirementRequest: {
+      countryCode: string
+      nationality: string
+      /** @enum {string} */
+      type:
+        | 'VISA'
+        | 'ETA'
+        | 'ENTRY_FORM'
+        | 'VACCINE'
+        | 'INSURANCE'
+        | 'PASSPORT_VALIDITY'
+        | 'ID_CARD'
+        | 'OTHER'
+      title: string
+      description?: string
+      /** Format: int32 */
+      leadDays?: number
+      officialUrl: string
+      /** Format: int64 */
+      version: number
+    }
+    RequirementResponse: {
+      /** Format: int64 */
+      id: number
+      countryCode: string
+      nationality: string
+      /** @enum {string} */
+      type:
+        | 'VISA'
+        | 'ETA'
+        | 'ENTRY_FORM'
+        | 'VACCINE'
+        | 'INSURANCE'
+        | 'PASSPORT_VALIDITY'
+        | 'ID_CARD'
+        | 'OTHER'
+      title: string
+      description?: string
+      /** Format: int32 */
+      leadDays?: number
+      officialUrl: string
+      /** @enum {string} */
+      status: 'DRAFT' | 'PUBLISHED'
+      /** Format: date */
+      verifiedAt?: string
+      /** @enum {string} */
+      source: 'MANUAL' | 'AI'
+      /** Format: int64 */
+      version: number
+    }
     CreateTripRequest: {
       name: string
       /** Format: date */
@@ -1264,6 +1410,25 @@ export interface components {
         | 'LIST'
       items: components['schemas']['TemplateItemPayload'][]
     }
+    RequirementRequest: {
+      countryCode: string
+      nationality: string
+      /** @enum {string} */
+      type:
+        | 'VISA'
+        | 'ETA'
+        | 'ENTRY_FORM'
+        | 'VACCINE'
+        | 'INSURANCE'
+        | 'PASSPORT_VALIDITY'
+        | 'ID_CARD'
+        | 'OTHER'
+      title: string
+      description?: string
+      /** Format: int32 */
+      leadDays?: number
+      officialUrl: string
+    }
     UpdateSuggestionRequest: {
       /** @enum {string} */
       status: 'PENDING' | 'ACCEPTED' | 'SNOOZED' | 'DISMISSED'
@@ -1404,6 +1569,49 @@ export interface components {
       photoName?: string
       websiteUri?: string
       googleMapsUri?: string
+    }
+    CountryResponse: {
+      code: string
+      name: string
+      flag: string
+      plugTypes?: string
+      voltage?: string
+      currency?: string
+      schengen: boolean
+      brIdCardAccepted: boolean
+    }
+    Item: {
+      /** Format: int64 */
+      id: number
+      nationality: string
+      /** @enum {string} */
+      type:
+        | 'VISA'
+        | 'ETA'
+        | 'ENTRY_FORM'
+        | 'VACCINE'
+        | 'INSURANCE'
+        | 'PASSPORT_VALIDITY'
+        | 'ID_CARD'
+        | 'OTHER'
+      title: string
+      description?: string
+      /** Format: int32 */
+      leadDays?: number
+      officialUrl: string
+      /** Format: date */
+      verifiedAt?: string
+      /** Format: date */
+      dueDate?: string
+      travelers: string[]
+    }
+    TripRequirementsResponse: {
+      countryCode: string
+      country?: components['schemas']['CountryResponse']
+      /** Format: date */
+      arrivalDate: string
+      requirements: components['schemas']['Item'][]
+      nationalitiesWithoutData: string[]
     }
     ItineraryActivityResponse: {
       /** Format: int64 */
@@ -2214,6 +2422,74 @@ export interface operations {
       }
     }
   }
+  getRequirement: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RequirementResponse']
+        }
+      }
+    }
+  }
+  updateRequirement: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateRequirementRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RequirementResponse']
+        }
+      }
+    }
+  }
+  deleteRequirement: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   devLogin: {
     parameters: {
       query: {
@@ -2834,6 +3110,97 @@ export interface operations {
       }
     }
   }
+  listRequirements: {
+    parameters: {
+      query?: {
+        countryCode?: string
+        status?: 'DRAFT' | 'PUBLISHED'
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RequirementResponse'][]
+        }
+      }
+    }
+  }
+  createRequirement: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RequirementRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RequirementResponse']
+        }
+      }
+    }
+  }
+  unpublishRequirement: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RequirementResponse']
+        }
+      }
+    }
+  }
+  publishRequirement: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        id: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['RequirementResponse']
+        }
+      }
+    }
+  }
   updateSuggestion: {
     parameters: {
       query?: never
@@ -3083,6 +3450,28 @@ export interface operations {
       }
     }
   }
+  listTripRequirements: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['TripRequirementsResponse'][]
+        }
+      }
+    }
+  }
   listTripLodgings: {
     parameters: {
       query?: never
@@ -3211,6 +3600,26 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['DashboardResponse']
+        }
+      }
+    }
+  }
+  listCountries: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['CountryResponse'][]
         }
       }
     }

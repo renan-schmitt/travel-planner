@@ -85,6 +85,8 @@ Usos previstos:
 - Na viagem, o sistema cruza destinos × nacionalidade dos viajantes e cria itens de checklist com **data limite** e lembrete.
 - Aviso visível: "informação indicativa, confirme na fonte oficial".
 
+- Cada viajante conta pela **nacionalidade principal** (a primeira cadastrada); quem tem a nacionalidade do país de destino não precisa de requisito. Os registros só valem depois de **publicados** por um administrador (tela `/admin/requirements`), que confirma cada um na fonte oficial.
+
 **Nacionalidade coberta inicialmente: brasileira.** O modelo de dados continua aceitando outras (campo `nationality` na base e `nationalities` no viajante), mas o seed e a revisão cobrem só passaporte/RG brasileiro.
 
 **Alimentação sob demanda** (a base cresce só com os destinos realmente usados):
@@ -154,7 +156,7 @@ Roda sempre que a viagem é alterada (e diariamente via cron, para regras de pra
 | `TRANSPORTE_LOCAL` | Estadia ≥ N dias sem aluguel de carro nem nota de transporte local | Sugerir aluguel, transporte público, apps |
 | `DOCUMENTO_DESTINO` | Requisito na base para país × nacionalidade de algum viajante | Item de checklist com data limite |
 | `DESTINO_SEM_REQUISITOS` | País da viagem sem nenhum registro na base para a nacionalidade dos viajantes | "Sem informações de documentos para este destino" → gerar rascunho com IA |
-| `REQUISITO_DESATUALIZADO` | Registro do país verificado há mais de 6 meses | "Revisar requisitos de <país>" |
+| `REQUISITO_DESATUALIZADO` | Registro do país verificado há mais de 6 meses | "Revisar requisitos de <país>" (só para administradores) |
 | `PASSAPORTE_VALIDADE` | Passaporte de algum viajante expira < 6 meses após a volta | Alerta crítico |
 | `CHECKIN_ONLINE` | Voo em < 48h | "Fazer check-in online" |
 | `SEGURO_VIAGEM` | Viagem internacional sem item de seguro | Sugerir (obrigatório em Schengen) |

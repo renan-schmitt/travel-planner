@@ -2,6 +2,7 @@ package com.travelplanner.itinerary.infra;
 
 import com.travelplanner.itinerary.domain.Stop;
 import com.travelplanner.trip.domain.DateSpan;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -22,4 +23,10 @@ public interface StopRepository extends JpaRepository<Stop, Long> {
       "select new com.travelplanner.trip.domain.DateSpan(min(s.arrivalDate), max(s.departureDate))"
           + " from Stop s where s.tripId = :tripId")
   DateSpan dateSpan(Long tripId);
+
+  /** Viagens com parada no país que não terminaram antes de {@code day} (ou sem data de fim). */
+  @Query(
+      "select distinct s.tripId from Stop s, Trip t where t.id = s.tripId and s.countryCode ="
+          + " :countryCode and (t.endDate is null or t.endDate >= :day)")
+  List<Long> findTripIdsInCountryNotEndedBefore(String countryCode, LocalDate day);
 }

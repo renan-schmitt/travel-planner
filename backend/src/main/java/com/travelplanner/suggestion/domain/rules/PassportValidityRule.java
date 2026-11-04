@@ -2,6 +2,7 @@ package com.travelplanner.suggestion.domain.rules;
 
 import com.travelplanner.checklist.domain.ChecklistCategory;
 import com.travelplanner.itinerary.domain.TripSnapshot.TravelerEntry;
+import com.travelplanner.requirements.domain.CountryInfo;
 import com.travelplanner.suggestion.domain.ChecklistDraft;
 import com.travelplanner.suggestion.domain.GapContext;
 import com.travelplanner.suggestion.domain.GapRule;
@@ -18,15 +19,13 @@ import org.springframework.stereotype.Component;
 /**
  * {@code PASSAPORTE_VALIDADE}: em viagem internacional, para cada viajante, passaporte sem validade
  * informada (INFO) ou vencendo antes de 6 meses depois da volta (CRITICAL, com o item "Renovar
- * passaporte de &lt;nome&gt;"). Brasileiros indo só a países que aceitam o RG ficam de fora (lista
- * fixa; será substituída pela base de requisitos na Fase 19).
+ * passaporte de &lt;nome&gt;"). Brasileiros indo só a países que aceitam o RG ({@code
+ * country.br_id_card_accepted}) ficam de fora.
  */
 @Component
 public class PassportValidityRule implements GapRule {
 
   public static final String CODE = "PASSAPORTE_VALIDADE";
-  static final Set<String> BRAZILIAN_ID_COUNTRIES =
-      Set.of("AR", "UY", "PY", "CL", "BO", "PE", "CO", "EC", "VE");
   static final int MONTHS_AFTER_RETURN = 6;
 
   @Override
@@ -40,7 +39,9 @@ public class PassportValidityRule implements GapRule {
     if (countries.isEmpty()) {
       return List.of();
     }
-    boolean idCardEnough = BRAZILIAN_ID_COUNTRIES.containsAll(countries);
+    boolean idCardEnough =
+        countries.stream()
+            .allMatch(c -> context.country(c).map(CountryInfo::brIdCardAccepted).orElse(false));
     LocalDate returnDate =
         context.snapshot().trip().endDate() != null
             ? context.snapshot().trip().endDate()

@@ -135,6 +135,47 @@ export function suggestionText(
             ? t('suggestions.rules.RESORT_OPCOES.descriptionAllInclusive')
             : t('suggestions.rules.RESORT_OPCOES.description'),
       }
+    case 'DOCUMENTO_DESTINO': {
+      const due = str(p, 'dueDate')
+      const travelers = str(p, 'travelers')
+      const requirement = str(p, 'title') ?? ''
+      const country = str(p, 'country') ?? ''
+      return {
+        // O título do requisito muitas vezes já cita o país ("e-Ticket (República Dominicana)").
+        title: requirement.includes(country)
+          ? requirement
+          : t('suggestions.rules.DOCUMENTO_DESTINO.title', { title: requirement, country }),
+        description: [
+          due
+            ? t('suggestions.rules.DOCUMENTO_DESTINO.due', { date: formatDate(due) })
+            : t('suggestions.rules.DOCUMENTO_DESTINO.noDue'),
+          travelers && t('suggestions.rules.DOCUMENTO_DESTINO.travelers', { names: travelers }),
+        ]
+          .filter(Boolean)
+          .join(' '),
+      }
+    }
+    case 'DESTINO_SEM_REQUISITOS':
+      return {
+        title: t('suggestions.rules.DESTINO_SEM_REQUISITOS.title', { country: str(p, 'country') }),
+        description: t('suggestions.rules.DESTINO_SEM_REQUISITOS.description'),
+      }
+    case 'REQUISITO_DESATUALIZADO': {
+      const verifiedAt = str(p, 'verifiedAt')
+      return {
+        title: t('suggestions.rules.REQUISITO_DESATUALIZADO.title', {
+          country: str(p, 'country'),
+        }),
+        description: verifiedAt
+          ? t('suggestions.rules.REQUISITO_DESATUALIZADO.description', {
+              title: str(p, 'title'),
+              date: formatDate(verifiedAt),
+            })
+          : t('suggestions.rules.REQUISITO_DESATUALIZADO.descriptionNever', {
+              title: str(p, 'title'),
+            }),
+      }
+    }
     default:
       return { title: t('suggestions.unknown'), description: '' }
   }

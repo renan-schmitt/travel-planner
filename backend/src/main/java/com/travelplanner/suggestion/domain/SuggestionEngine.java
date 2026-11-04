@@ -5,6 +5,8 @@ import com.travelplanner.checklist.domain.ChecklistItemDetails;
 import com.travelplanner.checklist.domain.ChecklistService;
 import com.travelplanner.itinerary.domain.TripSnapshot;
 import com.travelplanner.itinerary.domain.TripSnapshotLoader;
+import com.travelplanner.requirements.domain.RequirementCatalog;
+import com.travelplanner.requirements.domain.RequirementsData;
 import com.travelplanner.shared.time.TimeProperties;
 import com.travelplanner.suggestion.infra.SuggestionRepository;
 import com.travelplanner.trip.infra.TripRepository;
@@ -47,6 +49,7 @@ public class SuggestionEngine {
   private final List<GapRule> rules;
   private final TripRepository trips;
   private final TripSnapshotLoader snapshots;
+  private final RequirementCatalog requirements;
   private final ChecklistService checklist;
   private final SuggestionRepository suggestions;
   private final JsonMapper json;
@@ -62,6 +65,9 @@ public class SuggestionEngine {
       return;
     }
     TripSnapshot snapshot = snapshots.load(tripId);
+    RequirementsData requirementsData =
+        requirements.load(
+            snapshot.stops().stream().map(s -> s.details().countryCode()).distinct().toList());
     GapContext context =
         new GapContext(
             snapshot,
@@ -71,7 +77,8 @@ public class SuggestionEngine {
                     i ->
                         new GapContext.ChecklistEntry(
                             i.getRuleCode(), i.getRuleKey(), i.getTitle(), i.getStatus()))
-                .toList());
+                .toList(),
+            requirementsData);
     LocalDate today = today(snapshot.owner().homeCity());
 
     Map<Key, Suggestion> existing = new HashMap<>();
@@ -135,7 +142,8 @@ public class SuggestionEngine {
         tripId,
         ruleCode,
         logicalKey,
-        new ChecklistItemDetails(draft.category(), draft.title(), null, draft.dueDate(), null));
+        new ChecklistItemDetails(
+            draft.category(), draft.title(), draft.notes(), draft.dueDate(), null));
   }
 
   LocalDate today(HomeCity home) {

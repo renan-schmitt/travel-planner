@@ -1,5 +1,6 @@
 package com.travelplanner.suggestion.domain;
 
+import com.travelplanner.auth.domain.AdminAccess;
 import com.travelplanner.auth.domain.AppUserService;
 import com.travelplanner.shared.web.InvalidRequestException;
 import com.travelplanner.shared.web.NotFoundException;
@@ -32,6 +33,7 @@ public class SuggestionService {
   private final SuggestionRepository suggestions;
   private final TripAccessService access;
   private final AppUserService users;
+  private final AdminAccess adminAccess;
   private final SuggestionEngine engine;
   private final JsonMapper json;
 
@@ -39,12 +41,17 @@ public class SuggestionService {
   public record SuggestionView(
       Suggestion suggestion, SuggestionStatus status, SuggestionPayload payload) {}
 
-  /** Mais graves primeiro; {@code status} nulo = todas. */
+  /**
+   * Mais graves primeiro; {@code status} nulo = todas. A regra só para administradores ({@link
+   * SuggestionRepository#ADMIN_ONLY_RULE}) fica de fora para os demais.
+   */
   @Transactional(readOnly = true)
   public List<SuggestionView> list(long tripId, long userId, SuggestionStatus status) {
     access.requireRole(tripId, userId, TripRole.VIEWER);
     LocalDate today = today(userId);
+    boolean admin = adminAccess.isAdmin(userId);
     return suggestions.findByTripId(tripId).stream()
+        .filter(s -> admin || !SuggestionRepository.ADMIN_ONLY_RULE.equals(s.getRuleCode()))
         .map(s -> view(s, today))
         .filter(v -> status == null || v.status() == status)
         .sorted(ORDER)

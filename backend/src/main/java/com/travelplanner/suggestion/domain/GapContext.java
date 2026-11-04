@@ -3,27 +3,42 @@ package com.travelplanner.suggestion.domain;
 import com.travelplanner.checklist.domain.ChecklistStatus;
 import com.travelplanner.itinerary.domain.TripSnapshot;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
+import com.travelplanner.requirements.domain.CountryInfo;
+import com.travelplanner.requirements.domain.RequirementsData;
+import com.travelplanner.requirements.domain.TripDestinations;
 import java.text.Normalizer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
- * Entrada das regras: o {@link TripSnapshot}, o relógio e o resumo do checklist da viagem (dado
- * fora do snapshot, para regras como {@code SEGURO_VIAGEM}). Imutável.
+ * Entrada das regras: o {@link TripSnapshot}, o relógio, o resumo do checklist da viagem (dado fora
+ * do snapshot, para regras como {@code SEGURO_VIAGEM}) e a base de documentos dos países das
+ * paradas ({@link RequirementsData}: cadastro {@code country} e requisitos publicados). Imutável.
  */
-public record GapContext(TripSnapshot snapshot, Clock clock, List<ChecklistEntry> checklist) {
+public record GapContext(
+    TripSnapshot snapshot,
+    Clock clock,
+    List<ChecklistEntry> checklist,
+    RequirementsData requirements) {
 
   /** País usado quando o dono não tem cidade de origem nem nacionalidade. */
-  public static final String DEFAULT_HOME_COUNTRY = "BR";
+  public static final String DEFAULT_HOME_COUNTRY = TripDestinations.DEFAULT_HOME_COUNTRY;
 
   public GapContext {
     checklist = List.copyOf(checklist);
+    requirements = requirements == null ? RequirementsData.empty() : requirements;
+  }
+
+  /** Dados do país na base (vazio se o código não existe). */
+  public Optional<CountryInfo> country(String code) {
+    return requirements.country(code);
   }
 
   /** Item do checklist visto pelas regras. */
@@ -36,11 +51,7 @@ public record GapContext(TripSnapshot snapshot, Clock clock, List<ChecklistEntry
 
   /** País de casa: o da cidade de origem do dono, senão a nacionalidade dele, senão Brasil. */
   public String homeCountry() {
-    TripSnapshot.Owner owner = snapshot.owner();
-    if (owner.homeCity() != null && owner.homeCity().countryCode() != null) {
-      return owner.homeCity().countryCode();
-    }
-    return owner.nationality() != null ? owner.nationality() : DEFAULT_HOME_COUNTRY;
+    return TripDestinations.homeCountry(snapshot);
   }
 
   /** Países das paradas diferentes do país de casa. Vazio = viagem nacional. */

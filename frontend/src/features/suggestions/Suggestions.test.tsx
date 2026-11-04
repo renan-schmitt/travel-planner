@@ -154,7 +154,63 @@ const resort: Suggestion = {
   },
 }
 
+const eticket: Suggestion = {
+  id: 9,
+  ruleCode: 'DOCUMENTO_DESTINO',
+  logicalKey: '70',
+  severity: 'WARNING',
+  status: 'PENDING',
+  params: {
+    requirementId: 70,
+    countryCode: 'DO',
+    country: 'República Dominicana',
+    type: 'ENTRY_FORM',
+    title: 'Preencher o e-Ticket',
+    officialUrl: 'https://eticket.migracion.gob.do/',
+    dueDate: '2099-03-07',
+    travelers: 'Ana, Bruno',
+  },
+  checklist: {
+    category: 'DOCUMENTS',
+    title: 'Preencher o e-Ticket (República Dominicana)',
+    dueDate: '2099-03-07',
+    automatic: true,
+  },
+}
+
+const noRequirements: Suggestion = {
+  id: 10,
+  ruleCode: 'DESTINO_SEM_REQUISITOS',
+  logicalKey: 'JP',
+  severity: 'WARNING',
+  status: 'PENDING',
+  params: { countryCode: 'JP', country: 'Japão', nationalities: 'BR' },
+}
+
 describe('Aba Sugestões', () => {
+  it('documentos: prazo, link oficial e, para o admin, a base de requisitos', async () => {
+    const api = suggestionsApi([eticket, noRequirements])
+    server.use(loggedIn({ ...testUser, isAdmin: true }), tripDetail(), ...api.handlers)
+    await openSuggestions()
+
+    const doc = await screen.findByRole('article', {
+      name: 'Preencher o e-Ticket — República Dominicana',
+    })
+    expect(doc).toHaveTextContent('Prazo: 7 de mar. de 2099. Para Ana, Bruno.')
+    expect(within(doc).getByRole('link', { name: 'Site oficial' })).toHaveAttribute(
+      'href',
+      'https://eticket.migracion.gob.do/',
+    )
+    expect(within(doc).getByRole('button', { name: 'Ver checklist' })).toBeVisible()
+    const missing = screen.getByRole('article', {
+      name: 'Sem informações de documentos para Japão',
+    })
+    expect(within(missing).getByRole('link', { name: 'Revisar requisitos' })).toHaveAttribute(
+      'href',
+      '/admin/requirements?country=JP',
+    )
+  })
+
   it('restaurantes, atrações e resort levam à descoberta e à página do resort', async () => {
     const api = suggestionsApi([restaurants, attractions, resort])
     server.use(tripDetail(), ...api.handlers)

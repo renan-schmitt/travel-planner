@@ -1,4 +1,4 @@
-import { ChevronRight, LayoutTemplate, UsersRound, type LucideIcon } from 'lucide-react'
+import { ChevronRight, FileCheck, LayoutTemplate, UsersRound, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { themeOptions } from '@/app/theme-options'
@@ -33,6 +33,14 @@ export function ProfilePage() {
               title={t('profile.templates')}
               hint={t('profile.templatesHint')}
             />
+            {me?.isAdmin && (
+              <ProfileLink
+                to="/admin/requirements"
+                icon={FileCheck}
+                title={t('profile.adminRequirements')}
+                hint={t('profile.adminRequirementsHint')}
+              />
+            )}
           </ul>
         </Card>
         <Card>
