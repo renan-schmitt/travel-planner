@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, BedDouble, House, MapPinPlus, Route, Search } from 'lucide-react'
+import { ArrowDown, ArrowUp, BedDouble, House, MapPinPlus, Route, Search, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useMe } from '@/features/auth/api'
+import { useTripSavedPlaces } from '@/features/places/api'
+import { placesPath } from '@/features/places/places-url'
 import { hasRole, type Trip } from '@/features/trips/api'
 import { countryFlag } from '@/lib/countries'
 import { formatDateRange } from '@/lib/dates'
@@ -39,6 +41,7 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
   const { data: stops, error } = useStops(trip.id)
   const { data: segments = [] } = useSegments(trip.id)
   const { data: lodgings = [] } = useLodgings(trip.id)
+  const { data: savedPlaces = [] } = useTripSavedPlaces(trip.id)
   const { data: me } = useMe()
   const homeTz = me?.homeCity?.timezone ?? browserTimeZone()
   const reorder = useReorderStops(trip.id)
@@ -130,6 +133,11 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
                     </div>
                   )}
                 </div>
+                <StopPlacesLink
+                  tripId={trip.id}
+                  stop={stop}
+                  count={savedPlaces.filter((p) => p.stopId === stop.id).length}
+                />
                 <StopLodgings
                   tripId={trip.id}
                   stop={stop}
@@ -279,6 +287,24 @@ function StopLodgings({
           </Button>
         </div>
       )}
+    </div>
+  )
+}
+
+/** Atalho para a seção "Lugares" da parada (restaurantes e atrações), com o nº de favoritos. */
+function StopPlacesLink({ tripId, stop, count }: { tripId: number; stop: Stop; count: number }) {
+  const { t } = useTranslation()
+  return (
+    <div className="-mx-2 ml-9 pb-1">
+      <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+        <Link
+          to={placesPath(tripId, stop.id)}
+          aria-label={t('places.openIn', { city: stop.cityName, count })}
+        >
+          <Star strokeWidth={1.75} aria-hidden />
+          {count > 0 ? t('places.linkWithCount', { count }) : t('places.link')}
+        </Link>
+      </Button>
     </div>
   )
 }

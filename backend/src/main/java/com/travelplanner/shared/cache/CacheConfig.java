@@ -23,11 +23,18 @@ public class CacheConfig {
   /** Página da busca de hospedagem, por {@code LodgingQuery} (parada + filtros + página). */
   public static final String PLACES_LODGING_SEARCH = "places-lodging-search";
 
+  /** Resultados da busca de restaurantes/atrações, por {@code NearbyQuery} (centro + tipo). */
+  public static final String PLACES_NEARBY_SEARCH = "places-nearby-search";
+
   /**
-   * Faixa de preço que a busca mostrou para um {@code placeId}: ao adicionar o resultado à viagem,
-   * a hospedagem guarda a origem certa (Places ou estimada).
+   * Faixa de preço que uma busca (hotéis, restaurantes, atrações) mostrou para um {@code placeId}:
+   * ao adicionar o resultado à viagem, a hospedagem ou o favorito guarda a origem certa (Places ou
+   * estimada).
    */
-  public static final String PLACES_LODGING_TIER = "places-lodging-tier";
+  public static final String PLACES_SEARCH_TIER = "places-search-tier";
+
+  /** Nota, posição e link do Maps de um lugar, por {@code placeId} (favoritos). */
+  public static final String PLACES_INFO = "places-info";
 
   /** Nome e endereço de um lugar, por {@code placeId}. */
   public static final String PLACES_SUMMARY = "places-summary";
@@ -50,11 +57,17 @@ public class CacheConfig {
         PLACES_LODGING_SEARCH,
         Caffeine.newBuilder().expireAfterWrite(Duration.ofHours(1)).maximumSize(500).build());
     manager.registerCustomCache(
-        PLACES_LODGING_TIER,
+        PLACES_NEARBY_SEARCH,
+        Caffeine.newBuilder().expireAfterWrite(Duration.ofHours(1)).maximumSize(500).build());
+    manager.registerCustomCache(
+        PLACES_SEARCH_TIER,
         Caffeine.newBuilder().expireAfterWrite(Duration.ofHours(1)).maximumSize(10_000).build());
     manager.registerCustomCache(
         PLACES_SUMMARY,
         Caffeine.newBuilder().expireAfterWrite(Duration.ofHours(24)).maximumSize(2_000).build());
+    manager.registerCustomCache(
+        PLACES_INFO,
+        Caffeine.newBuilder().expireAfterWrite(Duration.ofHours(24)).maximumSize(5_000).build());
     manager.registerCustomCache(
         PLACES_PHOTO,
         Caffeine.newBuilder().expireAfterWrite(Duration.ofHours(1)).maximumSize(5_000).build());

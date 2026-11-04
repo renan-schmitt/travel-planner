@@ -3,6 +3,7 @@ package com.travelplanner.itinerary.domain;
 import com.travelplanner.auth.domain.AppUser;
 import com.travelplanner.auth.domain.AppUserService;
 import com.travelplanner.itinerary.infra.LodgingRepository;
+import com.travelplanner.itinerary.infra.SavedPlaceRepository;
 import com.travelplanner.itinerary.infra.StopRepository;
 import com.travelplanner.itinerary.infra.TransportSegmentRepository;
 import com.travelplanner.shared.web.NotFoundException;
@@ -30,6 +31,7 @@ public class TripSnapshotLoader {
   private final TransportSegmentRepository segments;
   private final LodgingRepository lodgings;
   private final TravelerRepository travelers;
+  private final SavedPlaceRepository savedPlaces;
 
   @Transactional(readOnly = true)
   public TripSnapshot load(long tripId) {
@@ -62,7 +64,10 @@ public class TripSnapshotLoader {
             .map(s -> new TripSnapshot.SegmentEntry(s.getId(), s.details()))
             .toList(),
         lodgings.findByTripId(tripId).stream()
-            .map(l -> new TripSnapshot.LodgingEntry(l.getId(), l.getStopId(), l.details()))
+            .map(
+                l ->
+                    new TripSnapshot.LodgingEntry(
+                        l.getId(), l.getStopId(), l.getPlaceId(), l.details()))
             .toList(),
         travelers.findByTripId(tripId).stream()
             .sorted(Comparator.comparing(Traveler::getId))
@@ -76,6 +81,12 @@ public class TripSnapshotLoader {
                             t.getBirthYear(),
                             t.getNationalities(),
                             t.getPassportExpiry())))
+            .toList(),
+        savedPlaces.findByTripId(tripId).stream()
+            .map(
+                p ->
+                    new TripSnapshot.SavedPlaceEntry(
+                        p.getId(), p.getStopId(), p.getPlaceId(), p.getKind()))
             .toList());
   }
 }

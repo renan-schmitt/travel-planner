@@ -2,13 +2,16 @@ package com.travelplanner.suggestion.domain;
 
 import com.travelplanner.auth.domain.HomeCity;
 import com.travelplanner.checklist.domain.ChecklistStatus;
+import com.travelplanner.itinerary.domain.BoardType;
 import com.travelplanner.itinerary.domain.LodgingDetails;
 import com.travelplanner.itinerary.domain.LodgingKind;
+import com.travelplanner.itinerary.domain.SavedPlaceKind;
 import com.travelplanner.itinerary.domain.SegmentDetails;
 import com.travelplanner.itinerary.domain.StopDetails;
 import com.travelplanner.itinerary.domain.TransportType;
 import com.travelplanner.itinerary.domain.TripSnapshot;
 import com.travelplanner.itinerary.domain.TripSnapshot.LodgingEntry;
+import com.travelplanner.itinerary.domain.TripSnapshot.SavedPlaceEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.SegmentEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.TravelerEntry;
@@ -42,6 +45,7 @@ public class TripSnapshotFixtures {
   private final List<SegmentEntry> segments = new ArrayList<>();
   private final List<LodgingEntry> lodgings = new ArrayList<>();
   private final List<TravelerEntry> travelers = new ArrayList<>();
+  private final List<SavedPlaceEntry> savedPlaces = new ArrayList<>();
   private final List<GapContext.ChecklistEntry> checklist = new ArrayList<>();
 
   public static TripSnapshotFixtures trip() {
@@ -163,22 +167,47 @@ public class TripSnapshotFixtures {
   }
 
   public LodgingEntry lodging(StopEntry stop, String checkIn, String checkOut) {
+    return lodging(
+        stop,
+        LodgingKind.HOTEL,
+        "Hotel " + stop.details().cityName(),
+        null,
+        null,
+        checkIn,
+        checkOut);
+  }
+
+  public LodgingEntry lodging(
+      StopEntry stop,
+      LodgingKind kind,
+      String name,
+      BoardType board,
+      String placeId,
+      String checkIn,
+      String checkOut) {
     LodgingEntry lodging =
         new LodgingEntry(
             nextId++,
             stop.id(),
+            placeId,
             new LodgingDetails(
-                LodgingKind.HOTEL,
-                "Hotel " + stop.details().cityName(),
+                kind,
+                name,
                 null,
                 LocalDate.parse(checkIn),
                 LocalDate.parse(checkOut),
-                null,
+                board,
                 null,
                 null,
                 null));
     lodgings.add(lodging);
     return lodging;
+  }
+
+  public SavedPlaceEntry savedPlace(StopEntry stop, SavedPlaceKind kind) {
+    SavedPlaceEntry place = new SavedPlaceEntry(nextId++, stop.id(), "place-" + nextId, kind);
+    savedPlaces.add(place);
+    return place;
   }
 
   public TravelerEntry traveler(String name, String passportExpiry, String... nationalities) {
@@ -227,7 +256,8 @@ public class TripSnapshotFixtures {
                     (SegmentEntry x) -> x.details().departure().toInstant()))
             .toList(),
         lodgings,
-        travelers);
+        travelers,
+        savedPlaces);
   }
 
   public GapContext context() {

@@ -26,6 +26,19 @@ public interface PlacesClient {
   LodgingPage searchLodging(LodgingQuery query, String languageCode);
 
   /**
+   * Restaurantes/atrações perto do centro ({@code POST /places:searchNearby}, por popularidade, até
+   * 20). Sem centro, busca por texto na cidade. Mesmo SKU (Enterprise) da busca de hospedagem.
+   */
+  List<PlaceResult> searchNearby(NearbyQuery query, String languageCode);
+
+  /**
+   * Nota, posição e link do Maps de um lugar.
+   *
+   * @throws com.travelplanner.shared.web.NotFoundException se o {@code placeId} não existir
+   */
+  PlaceInfo getPlaceInfo(String placeId, String languageCode);
+
+  /**
    * Nome e endereço de um lugar (field mask mínima).
    *
    * @throws com.travelplanner.shared.web.NotFoundException se o {@code placeId} não existir

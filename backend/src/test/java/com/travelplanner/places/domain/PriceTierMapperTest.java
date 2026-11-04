@@ -29,6 +29,9 @@ class PriceTierMapperTest {
     "bed_and_breakfast, 2",
     "guest_house, 2",
     "resort_hotel, 3",
+    "fast_food_restaurant, 1",
+    "food_court, 1",
+    "fine_dining_restaurant, 4",
   })
   void withoutPriceLevelEstimatesFromType(String type, int tier) {
     assertThat(PriceTierMapper.map(null, type)).contains(new PriceTier(tier, TierSource.HEURISTIC));
@@ -38,7 +41,7 @@ class PriceTierMapperTest {
 
   @ParameterizedTest
   @CsvSource(
-      value = {"hotel", "lodging", "NULL"},
+      value = {"hotel", "lodging", "restaurant", "NULL"},
       nullValues = "NULL")
   void unknownWithoutPriceLevel(String type) {
     assertThat(PriceTierMapper.map(null, type)).isEmpty();

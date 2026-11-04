@@ -2,7 +2,7 @@ package com.travelplanner.itinerary.api;
 
 import com.travelplanner.itinerary.domain.PriceTierSource;
 import com.travelplanner.places.domain.LodgingPage;
-import com.travelplanner.places.domain.LodgingPlace;
+import com.travelplanner.places.domain.PlaceResult;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public record LodgingSearchResponse(
       String websiteUri,
       String googleMapsUri) {
 
-    static LodgingSearchResult from(LodgingPlace place) {
+    static LodgingSearchResult from(PlaceResult place) {
       var tier = place.priceTier();
       return new LodgingSearchResult(
           place.placeId(),

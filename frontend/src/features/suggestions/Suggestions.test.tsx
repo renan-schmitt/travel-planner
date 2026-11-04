@@ -114,7 +114,74 @@ async function openSuggestions(path = '/trips/42?tab=suggestions') {
   return result
 }
 
+const restaurants: Suggestion = {
+  id: 6,
+  ruleCode: 'RESTAURANTES',
+  logicalKey: '1',
+  severity: 'INFO',
+  status: 'PENDING',
+  params: { stopId: 1, city: 'Lisboa', nights: 3 },
+}
+
+const attractions: Suggestion = {
+  id: 7,
+  ruleCode: 'ATRACOES',
+  logicalKey: '1',
+  severity: 'INFO',
+  status: 'PENDING',
+  params: { stopId: 1, city: 'Lisboa', nights: 3 },
+}
+
+const resort: Suggestion = {
+  id: 8,
+  ruleCode: 'RESORT_OPCOES',
+  logicalKey: '20',
+  severity: 'INFO',
+  status: 'PENDING',
+  params: {
+    lodgingId: 20,
+    name: 'Barceló Bávaro',
+    stopId: 1,
+    city: 'Punta Cana',
+    placeId: 'ChIJBarcelo',
+    allInclusive: true,
+  },
+  checklist: {
+    category: 'BOOKINGS',
+    title: 'Ver restaurantes à la carte/reservas do resort: Barceló Bávaro',
+    dueDate: '2099-03-10',
+    automatic: false,
+  },
+}
+
 describe('Aba Sugestões', () => {
+  it('restaurantes, atrações e resort levam à descoberta e à página do resort', async () => {
+    const api = suggestionsApi([restaurants, attractions, resort])
+    server.use(tripDetail(), ...api.handlers)
+    await openSuggestions()
+
+    const food = await screen.findByRole('article', { name: 'Onde comer em Lisboa?' })
+    expect(food).toHaveTextContent('3 noites e nenhum restaurante salvo.')
+    expect(within(food).getByRole('link', { name: 'Descobrir restaurantes' })).toHaveAttribute(
+      'href',
+      '/trips/42/stops/1/places?kind=restaurants&discover=1',
+    )
+    const sights = screen.getByRole('article', { name: 'O que fazer em Lisboa?' })
+    expect(within(sights).getByRole('link', { name: 'Descobrir atrações' })).toHaveAttribute(
+      'href',
+      '/trips/42/stops/1/places?kind=attractions&discover=1',
+    )
+    const resortCard = screen.getByRole('article', {
+      name: 'Restaurantes e reservas do Barceló Bávaro',
+    })
+    expect(resortCard).toHaveTextContent('No all-inclusive')
+    expect(within(resortCard).getByRole('button', { name: 'Adicionar ao checklist' })).toBeVisible()
+    expect(within(resortCard).getByRole('link', { name: 'Ver o resort no Maps' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/maps/search/?api=1&query=Barcel%C3%B3+B%C3%A1varo+Punta+Cana&query_place_id=ChIJBarcelo',
+    )
+  })
+
   it('mostra as pendentes com texto montado pelo i18n, severidade e contagem na aba', async () => {
     const api = suggestionsApi([passport, insurance, night, localTransport])
     server.use(tripDetail(), ...api.handlers)

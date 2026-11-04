@@ -13,7 +13,8 @@ public final class PriceTierMapper {
 
   /**
    * @param priceLevel enum do Places ({@code PRICE_LEVEL_MODERATE}; aceita também sem o prefixo)
-   * @param primaryType tipo principal do lugar ({@code hotel}, {@code resort_hotel}, …)
+   * @param primaryType tipo principal do lugar ({@code hotel}, {@code resort_hotel}, {@code
+   *     fast_food_restaurant}, …)
    * @return vazio se não houver como estimar
    */
   public static Optional<PriceTier> map(String priceLevel, String primaryType) {
@@ -43,6 +44,8 @@ public final class PriceTierMapper {
       case "hostel", "motel", "campground" -> Optional.of(1);
       case "bed_and_breakfast", "guest_house" -> Optional.of(2);
       case "resort_hotel" -> Optional.of(3);
+      case "fast_food_restaurant", "food_court" -> Optional.of(1);
+      case "fine_dining_restaurant" -> Optional.of(4);
       default -> Optional.empty();
     };
   }

@@ -735,7 +735,8 @@
     },
     "links": {
       "uber": "Uber",
-      "bookingTaxi": "Transfer no Booking"
+      "bookingTaxi": "Transfer no Booking",
+      "resortPage": "Ver o resort no Maps"
     },
     "checklistAdded": "Item no checklist: “{{title}}”.",
     "checklistOnAccept": "Ao aceitar, entra no checklist: “{{title}}”.",
@@ -791,9 +792,26 @@
         "title": "Contratar seguro viagem",
         "descriptionSchengen": "Obrigatório nos países do espaço Schengen (cobertura mínima de 30 mil euros).",
         "description": "Em viagem internacional, o seguro cobre despesas médicas e imprevistos."
+      },
+      "RESTAURANTES": {
+        "title": "Onde comer em {{city}}?",
+        "description_one": "{{count}} noite e nenhum restaurante salvo. Veja os mais populares perto da hospedagem.",
+        "description_other": "{{count}} noites e nenhum restaurante salvo. Veja os mais populares perto da hospedagem."
+      },
+      "ATRACOES": {
+        "title": "O que fazer em {{city}}?",
+        "description_one": "{{count}} noite e nenhuma atração salva. Veja museus, parques e pontos turísticos por perto.",
+        "description_other": "{{count}} noites e nenhuma atração salva. Veja museus, parques e pontos turísticos por perto."
+      },
+      "RESORT_OPCOES": {
+        "title": "Restaurantes e reservas do {{name}}",
+        "descriptionAllInclusive": "No all-inclusive, os restaurantes à la carte costumam exigir reserva, às vezes já no check-in.",
+        "description": "Resorts costumam ter restaurantes à la carte com reserva. Vale ver as opções antes de chegar."
       }
     },
-    "searchHotels": "Buscar hotéis"
+    "searchHotels": "Buscar hotéis",
+    "discoverRestaurants": "Descobrir restaurantes",
+    "discoverAttractions": "Descobrir atrações"
   },
   "hotels": {
     "title": "Hotéis em {{city}}",
@@ -848,6 +866,116 @@
       "japanese_inn": "Ryokan",
       "lodging": "Hospedagem",
       "other": "Hospedagem"
+    }
+  },
+  "places": {
+    "link": "Restaurantes e atrações",
+    "linkWithCount_one": "{{count}} lugar salvo",
+    "linkWithCount_other": "{{count}} lugares salvos",
+    "openIn_one": "Lugares em {{city}} ({{count}} salvo)",
+    "openIn_other": "Lugares em {{city}} ({{count}} salvos)",
+    "title": "Lugares em {{city}}",
+    "notFound": "Parada não encontrada.",
+    "tabs": {
+      "RESTAURANT": "Restaurantes",
+      "ATTRACTION": "Atrações"
+    },
+    "savedTitle": {
+      "RESTAURANT": "Restaurantes salvos",
+      "ATTRACTION": "Atrações salvas"
+    },
+    "emptySaved": {
+      "RESTAURANT": "Nenhum restaurante salvo. Toque em \"Descobrir\" para ver os mais populares por perto.",
+      "ATTRACTION": "Nenhuma atração salva. Toque em \"Descobrir\" para ver museus, parques e pontos turísticos."
+    },
+    "othersTitle": "Outros lugares",
+    "loadError": "Não foi possível carregar os lugares salvos.",
+    "discover": "Descobrir",
+    "discoverTitle": {
+      "RESTAURANT": "Restaurantes populares em {{city}}",
+      "ATTRACTION": "Atrações em {{city}}"
+    },
+    "closeDiscover": "Fechar a busca",
+    "centerNear": "Perto de {{place}}, por popularidade.",
+    "centerText": "Busca em {{city}} (parada sem localização no mapa).",
+    "cityCenter": "centro da cidade",
+    "distance": "{{km}} km de {{from}}",
+    "searching": "Buscando lugares…",
+    "unavailable": "Busca de lugares indisponível no momento. Tente de novo mais tarde.",
+    "searchError": "Não foi possível buscar os lugares.",
+    "empty": "Nenhum lugar encontrado com esses filtros.",
+    "save": "Salvar",
+    "saved": "Salvo",
+    "savedToast": "{{name}} salvo.",
+    "alreadySaved": "Esse lugar já está salvo.",
+    "saveError": "Não foi possível salvar. Tente de novo.",
+    "conflict": "Alguém alterou esse lugar enquanto você editava. Feche e abra de novo.",
+    "edit": "Editar {{name}}",
+    "editDescription": "Tipo, faixa de preço, notas e se já visitaram.",
+    "kindLabel": "Tipo",
+    "kinds": {
+      "RESTAURANT": "Restaurante",
+      "ATTRACTION": "Atração",
+      "OTHER": "Outro"
+    },
+    "notes": "Notas",
+    "notesPlaceholder": "Ex.: reservar com antecedência, pedir o prato do dia",
+    "notesTooLong": "Use no máximo 2000 caracteres.",
+    "visited": "Já visitamos",
+    "visitedBadge": "✓ Visitado",
+    "markVisited": "Visitado: {{name}}",
+    "saveChanges": "Salvar",
+    "updated": "Lugar atualizado.",
+    "remove": "Remover dos salvos",
+    "removed": "{{name}} removido.",
+    "categories": {
+      "restaurant": "Restaurante",
+      "fast_food_restaurant": "Fast-food",
+      "fine_dining_restaurant": "Alta gastronomia",
+      "seafood_restaurant": "Frutos do mar",
+      "steak_house": "Churrascaria",
+      "pizza_restaurant": "Pizzaria",
+      "italian_restaurant": "Italiano",
+      "japanese_restaurant": "Japonês",
+      "sushi_restaurant": "Sushi",
+      "brazilian_restaurant": "Brasileiro",
+      "portuguese_restaurant": "Português",
+      "spanish_restaurant": "Espanhol",
+      "french_restaurant": "Francês",
+      "mexican_restaurant": "Mexicano",
+      "chinese_restaurant": "Chinês",
+      "indian_restaurant": "Indiano",
+      "vegetarian_restaurant": "Vegetariano",
+      "vegan_restaurant": "Vegano",
+      "hamburger_restaurant": "Hamburgueria",
+      "bar": "Bar",
+      "cafe": "Café",
+      "bakery": "Padaria",
+      "ice_cream_shop": "Sorveteria",
+      "breakfast_restaurant": "Café da manhã",
+      "brunch_restaurant": "Brunch",
+      "tourist_attraction": "Ponto turístico",
+      "museum": "Museu",
+      "art_gallery": "Galeria de arte",
+      "park": "Parque",
+      "national_park": "Parque nacional",
+      "beach": "Praia",
+      "historical_landmark": "Patrimônio histórico",
+      "church": "Igreja",
+      "aquarium": "Aquário",
+      "zoo": "Zoológico",
+      "amusement_park": "Parque de diversões",
+      "water_park": "Parque aquático",
+      "garden": "Jardim",
+      "botanical_garden": "Jardim botânico",
+      "monument": "Monumento",
+      "castle": "Castelo",
+      "observation_deck": "Mirante",
+      "plaza": "Praça",
+      "place_of_worship": "Templo",
+      "cultural_landmark": "Marco cultural",
+      "food_court": "Praça de alimentação",
+      "other": "Lugar"
     }
   }
 }

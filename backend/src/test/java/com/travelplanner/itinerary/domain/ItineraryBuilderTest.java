@@ -81,6 +81,7 @@ class ItineraryBuilderTest {
         new LodgingEntry(
             id,
             stop.id(),
+            null,
             new LodgingDetails(
                 LodgingKind.HOTEL,
                 name,
@@ -104,6 +105,7 @@ class ItineraryBuilderTest {
             stops,
             segments,
             lodgings,
+            List.of(),
             List.of()));
   }
 

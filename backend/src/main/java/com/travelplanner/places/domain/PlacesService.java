@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Autocomplete e detalhes de cidades, com cache (autocomplete 10 min, detalhes 24 h) e fuso
- * calculado localmente a partir das coordenadas; busca de hospedagem e fotos (cache de 1 h). Falhas
- * não entram no cache.
+ * calculado localmente a partir das coordenadas; busca de hospedagem, de restaurantes/atrações e
+ * fotos (cache de 1 h); nota/posição de um lugar (24 h). Falhas não entram no cache.
  */
 @Service
 @RequiredArgsConstructor
@@ -72,17 +72,47 @@ public class PlacesService {
       page = new LodgingPage(List.copyOf(found.places()), found.nextPageToken());
       cache.put(query, page);
     }
-    Cache tiers = cache(CacheConfig.PLACES_LODGING_TIER);
-    page.places().stream()
+    rememberTiers(page.places());
+    return page;
+  }
+
+  /**
+   * Restaurantes/atrações perto do centro (cache de 1 h por consulta; não persistidos). A faixa de
+   * cada resultado fica lembrada por {@code placeId}, para {@link #searchedTier}.
+   */
+  @SuppressWarnings("unchecked")
+  public List<PlaceResult> searchNearby(NearbyQuery query) {
+    Cache cache = cache(CacheConfig.PLACES_NEARBY_SEARCH);
+    List<PlaceResult> results = cache.get(query, List.class);
+    if (results == null) {
+      results = List.copyOf(client.searchNearby(query, LANGUAGE));
+      cache.put(query, results);
+    }
+    rememberTiers(results);
+    return results;
+  }
+
+  /** Nota, posição e link do Maps (cache de 24 h). */
+  public PlaceInfo getPlaceInfo(String placeId) {
+    Cache cache = cache(CacheConfig.PLACES_INFO);
+    PlaceInfo info = cache.get(placeId, PlaceInfo.class);
+    if (info == null) {
+      info = client.getPlaceInfo(placeId, LANGUAGE);
+      cache.put(placeId, info);
+    }
+    return info;
+  }
+
+  private void rememberTiers(List<PlaceResult> results) {
+    Cache tiers = cache(CacheConfig.PLACES_SEARCH_TIER);
+    results.stream()
         .filter(p -> p.priceTier() != null)
         .forEach(p -> tiers.put(p.placeId(), p.priceTier()));
-    return page;
   }
 
   /** Faixa que uma busca recente (até 1 h) mostrou para o lugar. */
   public Optional<PriceTier> searchedTier(String placeId) {
-    return Optional.ofNullable(
-        cache(CacheConfig.PLACES_LODGING_TIER).get(placeId, PriceTier.class));
+    return Optional.ofNullable(cache(CacheConfig.PLACES_SEARCH_TIER).get(placeId, PriceTier.class));
   }
 
   /** Nome e endereço de um lugar (cache de 24 h). */
