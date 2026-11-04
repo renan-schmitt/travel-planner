@@ -1,8 +1,8 @@
 package com.travelplanner.itinerary.domain;
 
 /**
- * De onde veio a faixa de preço: do Places, de uma heurística, da IA ou do próprio usuário. Só
- * {@code USER} existe por enquanto; as outras chegam com a busca de hotéis (Fase 16) e a IA.
+ * De onde veio a faixa de preço: do Places, de uma heurística pelo tipo do lugar ("estimado"), da
+ * IA (Fase 25) ou do próprio usuário.
  */
 public enum PriceTierSource {
   PLACES,

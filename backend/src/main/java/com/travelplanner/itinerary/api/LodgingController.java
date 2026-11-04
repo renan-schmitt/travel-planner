@@ -52,7 +52,8 @@ class LodgingController {
       @PathVariable long stopId,
       @Valid @RequestBody LodgingRequest request) {
     return LodgingResponse.from(
-        lodgings.create(tripId, stopId, principal.getUserId(), request.toDomain()));
+        lodgings.create(
+            tripId, stopId, principal.getUserId(), request.toDomain(), request.placeId()));
   }
 
   @PutMapping("/stops/{stopId}/lodgings/{lodgingId}")

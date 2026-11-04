@@ -48,7 +48,7 @@ Um sistema web, pensado primeiro para o celular, para planejar viagens em famíl
 
   - O `priceLevel` é frequente em restaurantes, mas **costuma faltar em hotéis**. Fallback em cascata: (1) heurística pelo tipo do lugar (hostel/motel = `$`, pousada/B&B = `$$`, resort = `$$$`), marcada como "estimado"; (2) estimativa por IA, sob demanda; (3) ajuste manual pelo usuário, que fica salvo no favorito. O `priceRange` do Places foi descartado por ser raro em hospedagem e difícil de normalizar entre moedas.
   - Sempre exibir como indicativo, com um botão "ver preços" que abre o Booking/Google Hotels já com cidade e datas (link simples, sem integração).
-- **Categorização:** "categoria" (hotel, resort, pousada, apartamento) vem do `primaryType` do Places. Filtros: avaliação mínima, faixa de preço, distância do centro/praia.
+- **Categorização:** "categoria" (hotel, resort, pousada, apartamento) vem do `primaryType` do Places. Filtros: avaliação mínima, faixa de preço, distância do centro/praia. O filtro de faixa é aplicado pelo sistema depois do mapeamento acima (vale também a faixa estimada); o filtro `priceLevels` do Places não é usado, porque descarta todo lugar sem `priceLevel`, ou seja, quase todos os hotéis.
 - **Termos de uso:** o Google **não permite guardar o conteúdo** do Places por tempo indefinido. É permitido guardar o `place_id`, então o sistema armazena o `place_id` + dados do usuário (favorito, notas, faixa de preço ajustada) e busca os detalhes sob demanda, com cache curto.
 
 ### 3.2 Restaurantes e locais turísticos

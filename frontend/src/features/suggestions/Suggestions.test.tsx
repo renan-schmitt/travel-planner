@@ -153,6 +153,10 @@ describe('Aba Sugestões', () => {
     const nightCard = screen.getByRole('article', {
       name: 'Noite de 12/03 em Lisboa sem hospedagem',
     })
+    expect(within(nightCard).getByRole('link', { name: 'Buscar hotéis' })).toHaveAttribute(
+      'href',
+      '/trips/42/stops/1/hotels',
+    )
     await user.click(within(nightCard).getByRole('button', { name: 'Dispensar' }))
     await waitFor(() => expect(screen.queryAllByRole('article')).toHaveLength(0))
     expect(api.patches).toEqual([

@@ -452,6 +452,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}/lodging-search': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['searchLodging']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/lodgings': {
     parameters: {
       query?: never
@@ -476,6 +492,22 @@ export interface paths {
       cookie?: never
     }
     get: operations['getItinerary']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/places/photos': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['photo']
     put?: never
     post?: never
     delete?: never
@@ -920,7 +952,7 @@ export interface components {
     LodgingRequest: {
       /** @enum {string} */
       kind: 'HOTEL' | 'RENTAL' | 'FRIENDS_HOME'
-      name: string
+      name?: string
       address?: string
       /** Format: date */
       checkIn: string
@@ -932,6 +964,7 @@ export interface components {
       priceTier?: number
       bookingRef?: string
       notes?: string
+      placeId?: string
     }
     CreateShareLinkRequest: {
       /** @enum {string} */
@@ -1115,6 +1148,31 @@ export interface components {
       destinationCount: number
       /** Format: int32 */
       pendingSuggestions: number
+    }
+    LodgingSearchResponse: {
+      results: components['schemas']['LodgingSearchResult'][]
+      nextPageToken?: string
+    }
+    LodgingSearchResult: {
+      placeId: string
+      name: string
+      address?: string
+      /** Format: double */
+      lat?: number
+      /** Format: double */
+      lng?: number
+      /** Format: double */
+      rating?: number
+      /** Format: int32 */
+      userRatingCount?: number
+      /** Format: int32 */
+      priceTier?: number
+      /** @enum {string} */
+      priceTierSource?: 'PLACES' | 'HEURISTIC' | 'AI' | 'USER'
+      primaryType?: string
+      photoName?: string
+      websiteUri?: string
+      googleMapsUri?: string
     }
     ItineraryDayResponse: {
       /** Format: date */
@@ -2467,6 +2525,34 @@ export interface operations {
       }
     }
   }
+  searchLodging: {
+    parameters: {
+      query?: {
+        type?: 'HOTEL' | 'RESORT' | 'ANY'
+        minRating?: number
+        tiers?: number[]
+        page?: string
+      }
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LodgingSearchResponse']
+        }
+      }
+    }
+  }
   listTripLodgings: {
     parameters: {
       query?: never
@@ -2508,6 +2594,27 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ItineraryResponse']
         }
+      }
+    }
+  }
+  photo: {
+    parameters: {
+      query: {
+        name: string
+        w?: number
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
       }
     }
   }

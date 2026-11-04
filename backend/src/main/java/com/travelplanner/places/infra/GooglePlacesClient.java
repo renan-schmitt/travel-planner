@@ -1,13 +1,20 @@
 package com.travelplanner.places.infra;
 
 import com.travelplanner.places.domain.CitySuggestion;
+import com.travelplanner.places.domain.LodgingPage;
+import com.travelplanner.places.domain.LodgingPlace;
+import com.travelplanner.places.domain.LodgingQuery;
+import com.travelplanner.places.domain.LodgingType;
 import com.travelplanner.places.domain.PlaceCity;
+import com.travelplanner.places.domain.PlaceSummary;
 import com.travelplanner.places.domain.PlacesClient;
+import com.travelplanner.places.domain.PriceTierMapper;
 import com.travelplanner.shared.web.NotFoundException;
 import com.travelplanner.shared.web.ServiceUnavailableException;
 import java.net.http.HttpClient;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,6 +43,18 @@ class GooglePlacesClient implements PlacesClient {
 
   static final String CITY_FIELD_MASK =
       "id,displayName,formattedAddress,location,addressComponents";
+
+  static final String LODGING_FIELD_MASK =
+      "places.id,places.displayName,places.formattedAddress,places.location,places.rating,"
+          + "places.userRatingCount,places.priceLevel,places.primaryType,places.photos,"
+          + "places.websiteUri,places.googleMapsUri,nextPageToken";
+
+  static final String SUMMARY_FIELD_MASK = "id,displayName,formattedAddress";
+
+  /** Raio do {@code locationBias} da busca de hospedagem, em metros. */
+  static final double LODGING_RADIUS_M = 15_000;
+
+  static final int LODGING_PAGE_SIZE = 20;
 
   private static final List<String> CITY_TYPES = List.of("locality", "administrative_area_level_3");
 
@@ -110,7 +129,7 @@ class GooglePlacesClient implements PlacesClient {
                       .header("X-Goog-FieldMask", CITY_FIELD_MASK)
                       .retrieve()
                       .body(PlaceDetails.class));
-    } catch (CityNotFound e) {
+    } catch (PlaceNotFound e) {
       throw new NotFoundException("Cidade não encontrada.");
     }
     if (details == null || details.location() == null) {
@@ -126,6 +145,153 @@ class GooglePlacesClient implements PlacesClient {
         countryCode(details.addressComponents()),
         details.location().latitude(),
         details.location().longitude());
+  }
+
+  @Override
+  public LodgingPage searchLodging(LodgingQuery query, String languageCode) {
+    requireConfigured();
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("textQuery", lodgingText(query));
+    body.put("includedType", "lodging");
+    if (query.lat() != null && query.lng() != null) {
+      body.put(
+          "locationBias",
+          Map.of(
+              "circle",
+              Map.of(
+                  "center",
+                  Map.of("latitude", query.lat(), "longitude", query.lng()),
+                  "radius",
+                  LODGING_RADIUS_M)));
+    }
+    body.put("languageCode", languageCode);
+    body.put("pageSize", LODGING_PAGE_SIZE);
+    if (query.minRating() != null) {
+      body.put("minRating", query.minRating());
+    }
+    if (query.pageToken() != null) {
+      body.put("pageToken", query.pageToken());
+    }
+    SearchTextResponse response =
+        call(
+            "searchText",
+            () ->
+                http.post()
+                    .uri("/places:searchText")
+                    .header("X-Goog-FieldMask", LODGING_FIELD_MASK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(SearchTextResponse.class));
+    if (response == null) {
+      return new LodgingPage(List.of(), null);
+    }
+    List<LodgingPlace> places =
+        response.places() == null
+            ? List.of()
+            : response.places().stream()
+                .filter(p -> p.id() != null)
+                .map(GooglePlacesClient::toLodging)
+                .toList();
+    String next =
+        response.nextPageToken() == null || response.nextPageToken().isBlank()
+            ? null
+            : response.nextPageToken();
+    return new LodgingPage(places, next);
+  }
+
+  /** "hotels in Lisboa, Portugal" (ou "resorts in …"); o nome do país vai em inglês. */
+  static String lodgingText(LodgingQuery query) {
+    String noun = query.type() == LodgingType.RESORT ? "resorts" : "hotels";
+    String country =
+        query.countryCode() == null
+            ? ""
+            : Locale.of("", query.countryCode()).getDisplayCountry(Locale.ENGLISH);
+    return country.isBlank()
+        ? "%s in %s".formatted(noun, query.city())
+        : "%s in %s, %s".formatted(noun, query.city(), country);
+  }
+
+  @Override
+  public PlaceSummary getPlaceSummary(String placeId, String languageCode) {
+    requireConfigured();
+    PlaceDetails details;
+    try {
+      details =
+          call(
+              "details",
+              () ->
+                  http.get()
+                      .uri(
+                          uri ->
+                              uri.path("/places/{placeId}")
+                                  .queryParam("languageCode", languageCode)
+                                  .build(placeId))
+                      .header("X-Goog-FieldMask", SUMMARY_FIELD_MASK)
+                      .retrieve()
+                      .body(PlaceDetails.class));
+    } catch (PlaceNotFound e) {
+      throw new NotFoundException("Lugar não encontrado.");
+    }
+    if (details == null) {
+      throw new NotFoundException("Lugar não encontrado.");
+    }
+    return new PlaceSummary(
+        Objects.requireNonNullElse(details.id(), placeId),
+        text(details.displayName()),
+        details.formattedAddress());
+  }
+
+  @Override
+  public String photoUri(String photoName, int maxWidthPx) {
+    requireConfigured();
+    PhotoMedia media;
+    try {
+      media =
+          call(
+              "details",
+              () ->
+                  http.get()
+                      .uri(
+                          uri ->
+                              uri.path("/" + photoName + "/media")
+                                  .queryParam("maxWidthPx", maxWidthPx)
+                                  .queryParam("skipHttpRedirect", true)
+                                  .build())
+                      .retrieve()
+                      .body(PhotoMedia.class));
+    } catch (PlaceNotFound e) {
+      throw new NotFoundException("Foto não encontrada.");
+    }
+    if (media == null || media.photoUri() == null || !media.photoUri().startsWith("https://")) {
+      throw new NotFoundException("Foto não encontrada.");
+    }
+    return media.photoUri();
+  }
+
+  private static LodgingPlace toLodging(SearchPlace p) {
+    String photo =
+        p.photos() == null
+            ? null
+            : p.photos().stream()
+                .map(Photo::name)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    String name = text(p.displayName());
+    return new LodgingPlace(
+        p.id(),
+        name != null ? name : p.formattedAddress(),
+        p.formattedAddress(),
+        p.location() != null ? p.location().latitude() : null,
+        p.location() != null ? p.location().longitude() : null,
+        p.rating(),
+        p.userRatingCount(),
+        PriceTierMapper.map(p.priceLevel(), p.primaryType()).orElse(null),
+        p.primaryType(),
+        photo,
+        p.websiteUri(),
+        p.googleMapsUri());
   }
 
   /** {@code shortText} do componente do tipo {@code country} (ISO-2). */
@@ -159,7 +325,10 @@ class GooglePlacesClient implements PlacesClient {
     }
   }
 
-  /** 400/404 nos detalhes → cidade inexistente; qualquer outra falha (429, 5xx, rede) → 503. */
+  /**
+   * 400/404 nos detalhes (cidade, lugar, foto) → inexistente; qualquer outra falha (429, 5xx, rede)
+   * → 503.
+   */
   private <T> T call(String operation, Supplier<T> request) {
     try {
       return request.get();
@@ -167,7 +336,7 @@ class GooglePlacesClient implements PlacesClient {
       HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
       if ("details".equals(operation)
           && (status == HttpStatus.NOT_FOUND || status == HttpStatus.BAD_REQUEST)) {
-        throw new CityNotFound();
+        throw new PlaceNotFound();
       }
       log.warn("Places {} falhou com HTTP {}", operation, e.getStatusCode().value());
       throw new ServiceUnavailableException(UNAVAILABLE, e);
@@ -177,8 +346,8 @@ class GooglePlacesClient implements PlacesClient {
     }
   }
 
-  private static final class CityNotFound extends RuntimeException {
-    CityNotFound() {
+  private static final class PlaceNotFound extends RuntimeException {
+    PlaceNotFound() {
       super(null, null, false, false);
     }
   }
@@ -203,4 +372,23 @@ class GooglePlacesClient implements PlacesClient {
   record LatLng(double latitude, double longitude) {}
 
   record AddressComponent(String longText, String shortText, List<String> types) {}
+
+  record SearchTextResponse(List<SearchPlace> places, String nextPageToken) {}
+
+  record SearchPlace(
+      String id,
+      Text displayName,
+      String formattedAddress,
+      LatLng location,
+      Double rating,
+      Integer userRatingCount,
+      String priceLevel,
+      String primaryType,
+      List<Photo> photos,
+      String websiteUri,
+      String googleMapsUri) {}
+
+  record Photo(String name) {}
+
+  record PhotoMedia(String name, String photoUri) {}
 }

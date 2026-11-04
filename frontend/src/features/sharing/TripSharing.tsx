@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Copy, Link2, LogOut, Mail, Share2, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
@@ -361,7 +362,9 @@ function ShareLinksCard({ tripId }: { tripId: number }) {
   )
 }
 
-type T = ReturnType<typeof useTranslation>['t']
+// `TFunction` direto: `ReturnType<typeof useTranslation>['t']` estoura o limite de instanciação de
+// tipos do TypeScript conforme o JSON de traduções cresce.
+type T = TFunction
 
 async function copyLink(link: ShareLink, t: T) {
   try {

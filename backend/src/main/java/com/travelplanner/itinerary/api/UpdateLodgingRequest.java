@@ -25,7 +25,7 @@ public record UpdateLodgingRequest(
 
   LodgingDetails toDomain() {
     return new LodgingRequest(
-            kind, name, address, checkIn, checkOut, boardType, priceTier, bookingRef, notes)
+            kind, name, address, checkIn, checkOut, boardType, priceTier, bookingRef, notes, null)
         .toDomain();
   }
 }

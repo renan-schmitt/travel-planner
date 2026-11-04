@@ -232,13 +232,16 @@ class LodgingControllerIT extends IntegrationTest {
     send(ana, post(path, tripId, lisbon), lodging("Hotel", "2027-03-12", "2027-03-15", ""))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.errors[0].field").value("checkOut"));
-    // Nome em branco e faixa de preço fora de 1–4.
+    // Faixa de preço fora de 1–4; nome em branco (sem placeId, o nome é obrigatório).
     send(
             ana,
             post(path, tripId, lisbon),
-            lodging(" ", "2027-03-11", "2027-03-12", ", \"priceTier\": 5"))
+            lodging("Hotel", "2027-03-11", "2027-03-12", ", \"priceTier\": 5"))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.errors.length()").value(2));
+        .andExpect(jsonPath("$.errors[0].field").value("priceTier"));
+    send(ana, post(path, tripId, lisbon), lodging(" ", "2027-03-11", "2027-03-12", ""))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.errors[0].field").value("name"));
     // Parada de outra viagem.
     send(ana, post(path, tripId, faro), lodging("Hotel", "2027-05-01", "2027-05-02", ""))
         .andExpect(status().isNotFound());

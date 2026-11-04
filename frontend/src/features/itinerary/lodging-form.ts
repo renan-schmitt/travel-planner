@@ -88,7 +88,7 @@ export function toFormValues(lodging: Lodging): LodgingFormValues {
 
 const optional = (value: string) => value.trim() || undefined
 
-export function toLodgingBody(values: LodgingFormValues): CreateLodging {
+export function toLodgingBody(values: LodgingFormValues): CreateLodging & { name: string } {
   const booking = hasBooking(values.kind)
   return {
     kind: values.kind,
