@@ -1,6 +1,7 @@
 package com.travelplanner.suggestion.domain.rules;
 
 import com.travelplanner.checklist.domain.ChecklistCategory;
+import com.travelplanner.requirements.domain.CountryInfo;
 import com.travelplanner.suggestion.domain.ChecklistDraft;
 import com.travelplanner.suggestion.domain.GapContext;
 import com.travelplanner.suggestion.domain.GapRule;
@@ -15,8 +16,9 @@ import org.springframework.stereotype.Component;
 /**
  * {@code SEGURO_VIAGEM}: viagem internacional sem item de seguro no checklist (aberto ou
  * concluído): o item criado por esta regra, ou qualquer item cujo título fale em "seguro viagem"
- * (ex.: o do template Internacional). WARNING se algum país for do espaço Schengen (seguro
- * obrigatório), senão INFO. Aceitar cria "Contratar seguro viagem", 14 dias antes da partida.
+ * (ex.: o do template Internacional). WARNING se algum país for do espaço Schengen ({@code
+ * country.schengen}; seguro obrigatório), senão INFO. Aceitar cria "Contratar seguro viagem", 14
+ * dias antes da partida.
  */
 @Component
 public class TravelInsuranceRule implements GapRule {
@@ -24,12 +26,6 @@ public class TravelInsuranceRule implements GapRule {
   public static final String CODE = "SEGURO_VIAGEM";
   static final String KEY = "trip";
   static final int DAYS_BEFORE = 14;
-
-  /** Espaço Schengen (lista fixa por enquanto; a base de requisitos chega na Fase 19). */
-  static final Set<String> SCHENGEN =
-      Set.of(
-          "AT", "BE", "BG", "CH", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IS",
-          "IT", "LI", "LT", "LU", "LV", "MT", "NL", "NO", "PL", "PT", "RO", "SE", "SI", "SK");
 
   @Override
   public String code() {
@@ -42,7 +38,9 @@ public class TravelInsuranceRule implements GapRule {
     if (countries.isEmpty() || hasInsuranceItem(context)) {
       return List.of();
     }
-    boolean schengen = countries.stream().anyMatch(SCHENGEN::contains);
+    boolean schengen =
+        countries.stream()
+            .anyMatch(c -> context.country(c).map(CountryInfo::schengen).orElse(false));
     LocalDate start = context.snapshot().trip().startDate();
     return List.of(
         SuggestionDraft.of(

@@ -9,11 +9,15 @@ import {
   type SegmentFormValues,
 } from '@/features/itinerary/segment-form'
 import { placesPath } from '@/features/places/places-url'
+import { adminRequirementsPath } from '@/features/requirements/admin-path'
 import type { Suggestion } from './api'
 import { paramNumber, paramString } from './suggestion-text'
 
 /** Link externo útil para resolver a lacuna (ESP §6.4). */
-export type ExternalLink = { key: 'uber' | 'bookingTaxi' | 'resortPage'; href: string }
+export type ExternalLink = {
+  key: 'uber' | 'bookingTaxi' | 'resortPage' | 'officialSite'
+  href: string
+}
 
 const TRANSFER_LINKS: ExternalLink[] = [
   { key: 'uber', href: 'https://m.uber.com/' },
@@ -120,6 +124,7 @@ export function resolutionOf(suggestion: Suggestion, stops: Stop[], homeTz: stri
     case 'PASSAPORTE_VALIDADE':
       return { kind: 'travelers' }
     case 'CHECKIN_ONLINE':
+    case 'DOCUMENTO_DESTINO':
       return { kind: 'checklist' }
     default:
       return suggestion.checklist && !suggestion.checklist.automatic
@@ -131,6 +136,10 @@ export function resolutionOf(suggestion: Suggestion, stops: Stop[], homeTz: stri
 export function externalLinksOf(suggestion: Suggestion): ExternalLink[] {
   if (suggestion.ruleCode === 'TRANSFER_CHEGADA' || suggestion.ruleCode === 'TRANSFER_SAIDA') {
     return TRANSFER_LINKS
+  }
+  if (suggestion.ruleCode === 'DOCUMENTO_DESTINO') {
+    const href = paramString(suggestion, 'officialUrl')
+    return href && /^https?:\/\//.test(href) ? [{ key: 'officialSite', href }] : []
   }
   if (suggestion.ruleCode === 'RESORT_OPCOES') {
     // A página do lugar no Maps mostra o site e as reservas do resort.
@@ -147,14 +156,26 @@ export function externalLinksOf(suggestion: Suggestion): ExternalLink[] {
 /** Ação extra ao lado de "Resolver": uma tela de busca do sistema. */
 export type SearchLink = {
   to: string
-  label: 'searchHotels' | 'discoverRestaurants' | 'discoverAttractions'
+  label: 'searchHotels' | 'discoverRestaurants' | 'discoverAttractions' | 'reviewRequirements'
 }
 
 /**
  * Busca de hotéis da parada da noite sem hospedagem; "Descobrir" restaurantes/atrações da parada
- * sem favoritos.
+ * sem favoritos; para administradores, a base de requisitos do país sem dados ou desatualizado.
  */
-export function searchLinkOf(suggestion: Suggestion, tripId: number): SearchLink | undefined {
+export function searchLinkOf(
+  suggestion: Suggestion,
+  tripId: number,
+  isAdmin = false,
+): SearchLink | undefined {
+  if (
+    isAdmin &&
+    (suggestion.ruleCode === 'DESTINO_SEM_REQUISITOS' ||
+      suggestion.ruleCode === 'REQUISITO_DESATUALIZADO')
+  ) {
+    const country = paramString(suggestion, 'countryCode')
+    return { to: adminRequirementsPath(country), label: 'reviewRequirements' }
+  }
   const stopId = paramNumber(suggestion, 'stopId')
   if (stopId === undefined) return undefined
   switch (suggestion.ruleCode) {

@@ -200,7 +200,8 @@ function SuggestionCard({
   const severity = SEVERITY[suggestion.severity]
   const Icon = severity.icon
   const links = externalLinksOf(suggestion)
-  const searchLink = searchLinkOf(suggestion, trip.id)
+  const { data: me } = useMe()
+  const searchLink = searchLinkOf(suggestion, trip.id, me?.isAdmin === true)
   const headingId = `suggestion-${suggestion.id}`
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { useMe } from '@/features/auth/api'
+import { DocumentsSection } from '@/features/requirements/DocumentsSection'
 import { useMembers, type Member } from '@/features/sharing/api'
 import { hasRole, type Trip } from '@/features/trips/api'
 import { formatDate } from '@/lib/dates'
@@ -69,6 +70,7 @@ export function ChecklistTab({ trip }: { trip: Trip }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <DocumentsSection tripId={trip.id} />
       {(canEdit || items.length > 0) && (
         <div className="flex flex-wrap justify-end gap-2">
           {items.length > 0 && (

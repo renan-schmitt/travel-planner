@@ -146,9 +146,10 @@ class SuggestionControllerIT extends IntegrationTest {
             "TRANSPORTE_LOCAL:" + lisbon,
             "PASSAPORTE_VALIDADE:" + eu,
             "RESTAURANTES:" + lisbon,
-            "ATRACOES:" + lisbon);
+            "ATRACOES:" + lisbon,
+            "DESTINO_SEM_REQUISITOS:PT");
     mvc.perform(get("/api/v1/trips").with(ana.session()))
-        .andExpect(jsonPath("$[?(@.id == " + tripId + ")].pendingSuggestions").value(10));
+        .andExpect(jsonPath("$[?(@.id == " + tripId + ")].pendingSuggestions").value(11));
 
     create(
         ana,

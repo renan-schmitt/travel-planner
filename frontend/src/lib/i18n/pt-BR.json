@@ -103,7 +103,9 @@
     "travelersHint": "Quem viaja com você: família, amigos. Cadastre uma vez e use em todas as viagens.",
     "homeCityHint": "O fuso da cidade define o \"hoje\" das suas viagens.",
     "templates": "Templates de checklist",
-    "templatesHint": "Suas listas prontas para reaproveitar em outras viagens."
+    "templatesHint": "Suas listas prontas para reaproveitar em outras viagens.",
+    "adminRequirements": "Requisitos de documentos",
+    "adminRequirementsHint": "Administração: base de vistos e documentos por país"
   },
   "login": {
     "title": "Entrar",
@@ -785,7 +787,8 @@
     "links": {
       "uber": "Uber",
       "bookingTaxi": "Transfer no Booking",
-      "resortPage": "Ver o resort no Maps"
+      "resortPage": "Ver o resort no Maps",
+      "officialSite": "Site oficial"
     },
     "checklistAdded": "Item no checklist: “{{title}}”.",
     "checklistOnAccept": "Ao aceitar, entra no checklist: “{{title}}”.",
@@ -856,11 +859,27 @@
         "title": "Restaurantes e reservas do {{name}}",
         "descriptionAllInclusive": "No all-inclusive, os restaurantes à la carte costumam exigir reserva, às vezes já no check-in.",
         "description": "Resorts costumam ter restaurantes à la carte com reserva. Vale ver as opções antes de chegar."
+      },
+      "DOCUMENTO_DESTINO": {
+        "title": "{{title}} — {{country}}",
+        "due": "Prazo: {{date}}.",
+        "noDue": "Confira o prazo na fonte oficial.",
+        "travelers": "Para {{names}}."
+      },
+      "DESTINO_SEM_REQUISITOS": {
+        "title": "Sem informações de documentos para {{country}}",
+        "description": "Ainda não temos os requisitos de entrada deste destino. Confira no consulado ou no site oficial do país antes de viajar."
+      },
+      "REQUISITO_DESATUALIZADO": {
+        "title": "Revisar requisitos de {{country}}",
+        "description": "\"{{title}}\" foi verificado pela última vez em {{date}}. Confirme na fonte oficial.",
+        "descriptionNever": "\"{{title}}\" nunca foi verificado. Confirme na fonte oficial."
       }
     },
     "searchHotels": "Buscar hotéis",
     "discoverRestaurants": "Descobrir restaurantes",
-    "discoverAttractions": "Descobrir atrações"
+    "discoverAttractions": "Descobrir atrações",
+    "reviewRequirements": "Revisar requisitos"
   },
   "hotels": {
     "title": "Hotéis em {{city}}",
@@ -1025,6 +1044,83 @@
       "cultural_landmark": "Marco cultural",
       "food_court": "Praça de alimentação",
       "other": "Lugar"
+    }
+  },
+  "requirements": {
+    "title": "Documentos",
+    "disclaimer": "Informação indicativa: confirme sempre na fonte oficial antes de viajar.",
+    "plugs": "Tomadas {{types}}",
+    "dueDate": "Prazo:",
+    "travelers": "Para:",
+    "verifiedAt": "Verificado em",
+    "officialSite": "Site oficial",
+    "noData": "Sem informações de documentos para este destino ({{nationalities}}). Confira no consulado ou no site oficial do país.",
+    "addForCountry": "Cadastrar requisitos deste país",
+    "types": {
+      "VISA": "Visto",
+      "ETA": "Autorização eletrônica",
+      "ENTRY_FORM": "Formulário de entrada",
+      "VACCINE": "Vacina",
+      "INSURANCE": "Seguro",
+      "PASSPORT_VALIDITY": "Validade do passaporte",
+      "ID_CARD": "Documento de identidade",
+      "OTHER": "Outro"
+    }
+  },
+  "adminRequirements": {
+    "title": "Requisitos de documentos",
+    "hint": "Só os requisitos publicados valem para as viagens. Confirme cada um na fonte oficial antes de publicar.",
+    "forbidden": "Só administradores podem ver esta página.",
+    "new": "Novo",
+    "newTitle": "Novo requisito",
+    "editTitle": "Editar requisito",
+    "formHint": "Entra como rascunho; publique depois de conferir na fonte oficial.",
+    "country": "País",
+    "nationality": "Nacionalidade",
+    "allCountries": "Todos os países",
+    "choose": "Escolha…",
+    "statusFilter": "Status",
+    "statusFilters": {
+      "ALL": "Todos",
+      "DRAFT": "Rascunhos",
+      "PUBLISHED": "Publicados"
+    },
+    "status": {
+      "DRAFT": "Rascunho",
+      "PUBLISHED": "Publicado"
+    },
+    "forNationality": "Para {{nationality}}",
+    "verifiedAt": "verificado em {{date}}",
+    "neverVerified": "nunca verificado",
+    "empty": "Nenhum requisito com estes filtros.",
+    "loadError": "Não foi possível carregar os requisitos.",
+    "type": "Tipo",
+    "leadDays": "Antecedência (dias)",
+    "leadDaysHint": "Dias antes da chegada ao país para fazer (ex.: e-Ticket = 3). Sem valor, visto usa 30 dias.",
+    "titleLabel": "Título",
+    "description": "Descrição",
+    "officialUrl": "Link oficial",
+    "optional": "Opcional",
+    "publish": "Publicar",
+    "reverify": "Confirmar de novo (verificado hoje)",
+    "unpublish": "Voltar para rascunho",
+    "delete": "Excluir",
+    "confirmDelete": "Confirmar exclusão",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saved": "Requisito salvo.",
+    "published": "Requisito publicado.",
+    "unpublished": "Requisito voltou para rascunho.",
+    "deleted": "Requisito excluído.",
+    "conflict": "Outra pessoa alterou este requisito. Abra de novo para ver a versão atual.",
+    "invalid": "Confira os campos: país ou dados inválidos.",
+    "saveError": "Não foi possível salvar. Tente de novo.",
+    "errors": {
+      "countryRequired": "Escolha um país.",
+      "titleRequired": "Informe o título.",
+      "tooLong": "Texto longo demais.",
+      "leadDaysInvalid": "Use um número de dias (0 a 365).",
+      "urlInvalid": "Use um link começando com https://."
     }
   }
 }
