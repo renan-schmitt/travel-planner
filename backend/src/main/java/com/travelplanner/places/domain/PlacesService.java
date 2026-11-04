@@ -4,6 +4,7 @@ import com.travelplanner.places.infra.TimeZoneResolver;
 import com.travelplanner.shared.cache.CacheConfig;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -11,7 +12,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Autocomplete e detalhes de cidades, com cache (autocomplete 10 min, detalhes 24 h) e fuso
- * calculado localmente a partir das coordenadas. Falhas não entram no cache.
+ * calculado localmente a partir das coordenadas; busca de hospedagem e fotos (cache de 1 h). Falhas
+ * não entram no cache.
  */
 @Service
 @RequiredArgsConstructor
@@ -56,6 +58,54 @@ public class PlacesService {
             timeZones.resolve(place.lat(), place.lng()).orElse(null));
     cache.put(placeId, city);
     return city;
+  }
+
+  /**
+   * Hospedagens perto da cidade (cache de 1 h por consulta; os resultados não são persistidos). A
+   * faixa de cada resultado fica lembrada por {@code placeId}, para {@link #searchedTier}.
+   */
+  public LodgingPage searchLodging(LodgingQuery query) {
+    Cache cache = cache(CacheConfig.PLACES_LODGING_SEARCH);
+    LodgingPage page = cache.get(query, LodgingPage.class);
+    if (page == null) {
+      LodgingPage found = client.searchLodging(query, LANGUAGE);
+      page = new LodgingPage(List.copyOf(found.places()), found.nextPageToken());
+      cache.put(query, page);
+    }
+    Cache tiers = cache(CacheConfig.PLACES_LODGING_TIER);
+    page.places().stream()
+        .filter(p -> p.priceTier() != null)
+        .forEach(p -> tiers.put(p.placeId(), p.priceTier()));
+    return page;
+  }
+
+  /** Faixa que uma busca recente (até 1 h) mostrou para o lugar. */
+  public Optional<PriceTier> searchedTier(String placeId) {
+    return Optional.ofNullable(
+        cache(CacheConfig.PLACES_LODGING_TIER).get(placeId, PriceTier.class));
+  }
+
+  /** Nome e endereço de um lugar (cache de 24 h). */
+  public PlaceSummary getPlaceSummary(String placeId) {
+    Cache cache = cache(CacheConfig.PLACES_SUMMARY);
+    PlaceSummary summary = cache.get(placeId, PlaceSummary.class);
+    if (summary == null) {
+      summary = client.getPlaceSummary(placeId, LANGUAGE);
+      cache.put(placeId, summary);
+    }
+    return summary;
+  }
+
+  /** URL pública da foto (cache de 1 h; cada foto é cobrada). */
+  public String photoUri(String photoName, int maxWidthPx) {
+    Cache cache = cache(CacheConfig.PLACES_PHOTO);
+    String key = photoName + "@" + maxWidthPx;
+    String uri = cache.get(key, String.class);
+    if (uri == null) {
+      uri = client.photoUri(photoName, maxWidthPx);
+      cache.put(key, uri);
+    }
+    return uri;
   }
 
   /** " São Paulo " e "são paulo" usam a mesma entrada do cache. */

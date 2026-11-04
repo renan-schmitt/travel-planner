@@ -133,6 +133,13 @@ export function externalLinksOf(suggestion: Suggestion): ExternalLink[] {
     : []
 }
 
+/** Busca de hotéis da parada da noite sem hospedagem (ação extra ao lado de "Resolver"). */
+export function hotelSearchOf(suggestion: Suggestion, tripId: number): string | undefined {
+  if (suggestion.ruleCode !== 'NOITE_SEM_HOSPEDAGEM') return undefined
+  const stopId = paramNumber(suggestion, 'stopId')
+  return stopId === undefined ? undefined : `/trips/${tripId}/stops/${stopId}/hotels`
+}
+
 /** Chave de foco usada na URL (`?focus=`) para destacar uma sugestão. */
 export function focusKey(ruleCode: string, logicalKey: string) {
   return `${ruleCode}:${logicalKey}`

@@ -3,6 +3,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { TemplatesPage } from '@/features/checklist/TemplatesPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { HotelSearchPage } from '@/features/hotels/HotelSearchPage'
 import { JoinPage } from '@/features/sharing/JoinPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { TravelersPage } from '@/features/travelers/TravelersPage'
@@ -41,6 +42,7 @@ export const routes: RouteObject[] = [
           { path: 'trips/new', element: <NewTripPage /> },
           { path: 'trips/:tripId', element: <TripPage /> },
           { path: 'trips/:tripId/edit', element: <EditTripPage /> },
+          { path: 'trips/:tripId/stops/:stopId/hotels', element: <HotelSearchPage /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: 'profile/travelers', element: <TravelersPage /> },
           { path: 'profile/templates', element: <TemplatesPage /> },

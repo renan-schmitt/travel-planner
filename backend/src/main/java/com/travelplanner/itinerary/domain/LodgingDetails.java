@@ -6,10 +6,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Campos editáveis de uma hospedagem. Nome em texto livre (a busca no Places chega na Fase 16);
- * {@code priceTier} de 1 ({@code $}) a 4 ({@code $$$$}), ou {@code null} = "não sei". Na casa de um
- * amigo ou parente ({@link LodgingKind#FRIENDS_HOME}) regime, faixa de preço e reserva são
- * descartados.
+ * Campos editáveis de uma hospedagem. Nome em texto livre ou vindo da busca no Places; {@code
+ * priceTier} de 1 ({@code $}) a 4 ({@code $$$$}), ou {@code null} = "não sei". Na casa de um amigo
+ * ou parente ({@link LodgingKind#FRIENDS_HOME}) regime, faixa de preço e reserva são descartados.
  */
 public record LodgingDetails(
     LodgingKind kind,
@@ -30,6 +29,12 @@ public record LodgingDetails(
       priceTier = null;
       bookingRef = null;
     }
+  }
+
+  /** Os mesmos campos com outro nome e endereço (ex.: completados pelo Places). */
+  public LodgingDetails withPlace(String name, String address) {
+    return new LodgingDetails(
+        kind, name, address, checkIn, checkOut, boardType, priceTier, bookingRef, notes);
   }
 
   public int nights() {

@@ -36,8 +36,10 @@ export function LodgingSheet({
   lodgings,
   lodging,
   preset,
+  placeId,
   open,
   onOpenChange,
+  onCreated,
 }: {
   tripId: number
   stop?: Stop
@@ -45,8 +47,12 @@ export function LodgingSheet({
   lodging?: Lodging
   /** Valores que substituem os sugeridos numa hospedagem nova (ex.: "Resolver" de uma sugestão). */
   preset?: Partial<LodgingFormValues>
+  /** Lugar do Places escolhido na busca de hotéis (vai junto ao criar). */
+  placeId?: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Chamado depois de criar uma hospedagem nova (além de fechar o sheet). */
+  onCreated?: () => void
 }) {
   const { t } = useTranslation()
   const close = () => onOpenChange(false)
@@ -74,7 +80,9 @@ export function LodgingSheet({
               stop={stop}
               lodgings={lodgings}
               preset={preset}
+              placeId={placeId}
               onDone={close}
+              onCreated={onCreated}
             />
           )}
         </div>
@@ -94,13 +102,17 @@ function NewLodging({
   stop,
   lodgings,
   preset,
+  placeId,
   onDone,
+  onCreated,
 }: {
   tripId: number
   stop: Stop
   lodgings: Lodging[]
   preset?: Partial<LodgingFormValues>
+  placeId?: string
   onDone: () => void
+  onCreated?: () => void
 }) {
   const { t } = useTranslation()
   const create = useCreateLodging(tripId)
@@ -109,11 +121,12 @@ function NewLodging({
 
   function onSubmit(values: LodgingFormValues) {
     create.mutate(
-      { stopId: stop.id, body: toLodgingBody(values) },
+      { stopId: stop.id, body: { ...toLodgingBody(values), placeId } },
       {
         onSuccess: () => {
           toast.success(t('lodgingForm.created'))
           onDone()
+          onCreated?.()
         },
         onError: (error) => toast.error(t(saveErrorKey(error))),
       },

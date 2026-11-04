@@ -6,6 +6,7 @@ import {
   Info,
   OctagonAlert,
   RotateCcw,
+  Search,
   Sparkles,
   TriangleAlert,
   X,
@@ -46,7 +47,7 @@ import {
   type Suggestion,
   type SuggestionStatus,
 } from './api'
-import { externalLinksOf, focusKey, resolutionOf, type Resolution } from './resolve'
+import { externalLinksOf, focusKey, hotelSearchOf, resolutionOf, type Resolution } from './resolve'
 import { suggestionText } from './suggestion-text'
 
 const SEVERITY: Record<
@@ -199,6 +200,7 @@ function SuggestionCard({
   const severity = SEVERITY[suggestion.severity]
   const Icon = severity.icon
   const links = externalLinksOf(suggestion)
+  const hotelSearch = hotelSearchOf(suggestion, trip.id)
   const headingId = `suggestion-${suggestion.id}`
 
   useEffect(() => {
@@ -276,6 +278,14 @@ function SuggestionCard({
               onChecklist={() => goTo('checklist')}
               disabled={decide.isPending}
             />
+            {hotelSearch && (
+              <Button asChild variant="outline">
+                <Link to={hotelSearch}>
+                  <Search strokeWidth={1.75} aria-hidden />
+                  {t('suggestions.searchHotels')}
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" onClick={onSnooze} disabled={decide.isPending}>
               <AlarmClock strokeWidth={1.75} aria-hidden />
               {t('suggestions.snooze')}

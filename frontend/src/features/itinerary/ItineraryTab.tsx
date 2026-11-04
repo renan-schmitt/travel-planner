@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowUp, BedDouble, House, MapPinPlus, Route } from 'lucide-react'
+import { ArrowDown, ArrowUp, BedDouble, House, MapPinPlus, Route, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -130,6 +131,7 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
                   )}
                 </div>
                 <StopLodgings
+                  tripId={trip.id}
                   stop={stop}
                   lodgings={lodgings.filter((l) => l.stopId === stop.id)}
                   onAdd={canEdit ? () => setEditingLodging({ stop }) : undefined}
@@ -210,21 +212,24 @@ function HomeNode({ name }: { name?: string }) {
 
 /**
  * Hospedagens da parada, por check-in. Editor toca para editar e adiciona outra (ex.: dois hotéis
- * na mesma cidade); bate-volta (0 noite) não tem hospedagem.
+ * na mesma cidade); bate-volta (0 noite) não tem hospedagem. "Buscar hotéis" leva à busca no
+ * Places (também para o leitor, que só não adiciona).
  */
 function StopLodgings({
+  tripId,
   stop,
   lodgings,
   onAdd,
   onEdit,
 }: {
+  tripId: number
   stop: Stop
   lodgings: Lodging[]
   onAdd?: () => void
   onEdit?: (lodging: Lodging) => void
 }) {
   const { t } = useTranslation()
-  if (lodgings.length === 0 && (!onAdd || stop.nights === 0)) return null
+  if (lodgings.length === 0 && stop.nights === 0) return null
   return (
     <div
       role="group"
@@ -249,17 +254,28 @@ function StopLodgings({
           )}
         </div>
       ))}
-      {onAdd && stop.nights > 0 && (
-        <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-mx-2 text-muted-foreground"
-            aria-label={t('lodgings.addIn', { city: stop.cityName })}
-            onClick={onAdd}
-          >
-            <BedDouble strokeWidth={1.75} aria-hidden />
-            {t(lodgings.length === 0 ? 'lodgings.add' : 'lodgings.addAnother')}
+      {stop.nights > 0 && (
+        <div className="-mx-2 flex flex-wrap gap-x-1">
+          {onAdd && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              aria-label={t('lodgings.addIn', { city: stop.cityName })}
+              onClick={onAdd}
+            >
+              <BedDouble strokeWidth={1.75} aria-hidden />
+              {t(lodgings.length === 0 ? 'lodgings.add' : 'lodgings.addAnother')}
+            </Button>
+          )}
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+            <Link
+              to={`/trips/${tripId}/stops/${stop.id}/hotels`}
+              aria-label={t('lodgings.searchIn', { city: stop.cityName })}
+            >
+              <Search strokeWidth={1.75} aria-hidden />
+              {t('lodgings.search')}
+            </Link>
           </Button>
         </div>
       )}

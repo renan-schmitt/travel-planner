@@ -84,6 +84,17 @@ public class Lodging extends BaseEntity {
     this.notes = details.notes();
   }
 
+  /**
+   * Liga a hospedagem a um lugar do Places (resultado da busca). Se a faixa veio da busca, guarda a
+   * origem dela ({@code PLACES} ou {@code HEURISTIC}) no lugar de {@code USER}.
+   */
+  public void linkPlace(String placeId, PriceTierSource tierSource) {
+    this.placeId = placeId;
+    if (priceTier != null && tierSource != null) {
+      this.priceTierSource = tierSource;
+    }
+  }
+
   public LodgingDetails details() {
     return new LodgingDetails(
         kind, name, address, checkIn, checkOut, boardType, priceTier, bookingRef, notes);

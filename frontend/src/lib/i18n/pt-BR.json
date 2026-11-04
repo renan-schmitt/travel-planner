@@ -370,7 +370,9 @@
     "add": "Adicionar hospedagem",
     "addAnother": "Outra hospedagem",
     "addIn": "Adicionar hospedagem em {{city}}",
-    "edit": "Editar hospedagem: {{name}}"
+    "edit": "Editar hospedagem: {{name}}",
+    "search": "Buscar hotéis",
+    "searchIn": "Buscar hotéis em {{city}}"
   },
   "lodgingKind": {
     "HOTEL": "Hotel/pousada",
@@ -790,6 +792,62 @@
         "descriptionSchengen": "Obrigatório nos países do espaço Schengen (cobertura mínima de 30 mil euros).",
         "description": "Em viagem internacional, o seguro cobre despesas médicas e imprevistos."
       }
+    },
+    "searchHotels": "Buscar hotéis"
+  },
+  "hotels": {
+    "title": "Hotéis em {{city}}",
+    "back": "Voltar para {{trip}}",
+    "notFound": "Parada não encontrada.",
+    "filters": {
+      "type": "Tipo",
+      "rating": "Avaliação",
+      "tier": "Faixa de preço"
+    },
+    "types": {
+      "HOTEL": "Hotéis",
+      "RESORT": "Resorts",
+      "ANY": "Todos"
+    },
+    "minRating": "★ {{rating}}+",
+    "sortLabel": "Ordenar por",
+    "sort": {
+      "relevance": "Relevância",
+      "rating": "Avaliação",
+      "reviews": "Nº de avaliações",
+      "price": "Preço"
+    },
+    "searching": "Buscando hotéis…",
+    "unavailable": "Busca de hotéis indisponível no momento. Você ainda pode adicionar a hospedagem à mão no roteiro.",
+    "loadError": "Não foi possível buscar os hotéis.",
+    "empty": "Nenhum hotel encontrado com esses filtros.",
+    "resultsLabel": "Resultados",
+    "loadMore": "Carregar mais",
+    "loadingMore": "Carregando…",
+    "tierDisclaimer": "Faixa de preço indicativa",
+    "ratingLabel_one": "Nota {{rating}} ({{count}} avaliação)",
+    "ratingLabel_other": "Nota {{rating}} ({{count}} avaliações)",
+    "distance": "{{km}} km do centro",
+    "viewOnMaps": "Ver no Maps",
+    "viewPrices": "Ver preços",
+    "add": "Adicionar à viagem",
+    "categories": {
+      "hotel": "Hotel",
+      "resort_hotel": "Resort",
+      "hostel": "Hostel",
+      "motel": "Motel",
+      "bed_and_breakfast": "Pousada",
+      "guest_house": "Casa de hóspedes",
+      "inn": "Pousada",
+      "campground": "Camping",
+      "extended_stay_hotel": "Apart-hotel",
+      "farmstay": "Hotel fazenda",
+      "cottage": "Chalé",
+      "private_guest_room": "Quarto privativo",
+      "budget_japanese_inn": "Pousada japonesa",
+      "japanese_inn": "Ryokan",
+      "lodging": "Hospedagem",
+      "other": "Hospedagem"
     }
   }
 }
