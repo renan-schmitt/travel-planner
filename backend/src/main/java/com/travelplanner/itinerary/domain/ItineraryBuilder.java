@@ -2,6 +2,7 @@ package com.travelplanner.itinerary.domain;
 
 import com.travelplanner.itinerary.domain.ItineraryDay.Event;
 import com.travelplanner.itinerary.domain.ItineraryDay.Overnight;
+import com.travelplanner.itinerary.domain.TripSnapshot.ActivityEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.LodgingEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.SegmentEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
@@ -20,8 +21,9 @@ import java.util.Optional;
  * <ul>
  *   <li>Trechos entram no dia da data <b>local</b> de cada ponta (partida no fuso da partida,
  *       chegada no fuso da chegada).
- *   <li>Ordem dos eventos: check-outs, trechos pelo horário local, check-ins (hospedagens não têm
- *       horário; o check-out costuma ser de manhã e o check-in depois da chegada).
+ *   <li>Ordem dos eventos: check-outs, trechos e atividades com horário pelo horário local,
+ *       check-ins (hospedagens não têm horário; o check-out costuma ser de manhã e o check-in
+ *       depois da chegada) e, por último, as atividades sem horário na ordem definida pelo usuário.
  *   <li>Noite: hospedagem com {@code checkIn <= dia < checkOut}; senão, trecho que parte até o dia
  *       e chega depois dele ("em trânsito"); senão, lacuna se a noite fica entre a primeira chegada
  *       e a última saída das paradas, ou "em casa" fora delas.
@@ -37,7 +39,9 @@ public final class ItineraryBuilder {
           .thenComparing(Event::time, Comparator.nullsFirst(Comparator.naturalOrder()))
           .thenComparing(
               e -> e.at() == null ? null : e.at().toInstant(),
-              Comparator.nullsFirst(Comparator.naturalOrder()));
+              Comparator.nullsFirst(Comparator.naturalOrder()))
+          .thenComparingInt(e -> e.activity() == null ? 0 : e.activity().sortOrder())
+          .thenComparingLong(e -> e.activity() == null ? 0 : e.activity().id());
 
   private ItineraryBuilder() {}
 
@@ -90,10 +94,10 @@ public final class ItineraryBuilder {
     List<Event> events = new ArrayList<>();
     for (LodgingEntry lodging : snapshot.lodgings()) {
       if (lodging.details().checkOut().equals(date)) {
-        events.add(new Event(ItineraryEventKind.CHECK_OUT, null, null, null, lodging));
+        events.add(new Event(ItineraryEventKind.CHECK_OUT, null, null, null, lodging, null));
       }
       if (lodging.details().checkIn().equals(date)) {
-        events.add(new Event(ItineraryEventKind.CHECK_IN, null, null, null, lodging));
+        events.add(new Event(ItineraryEventKind.CHECK_IN, null, null, null, lodging, null));
       }
     }
     for (SegmentEntry segment : snapshot.segments()) {
@@ -113,13 +117,25 @@ public final class ItineraryBuilder {
         events.add(segmentEvent(ItineraryEventKind.SEGMENT_ARRIVAL, d.arrival(), segment));
       }
     }
+    for (ActivityEntry activity : snapshot.activities()) {
+      if (activity.details().day().equals(date)) {
+        events.add(
+            new Event(
+                ItineraryEventKind.ACTIVITY,
+                activity.details().startTime(),
+                null,
+                null,
+                null,
+                activity));
+      }
+    }
     events.sort(EVENT_ORDER);
     return events;
   }
 
   private static Event segmentEvent(
       ItineraryEventKind kind, ZonedDateTime at, SegmentEntry segment) {
-    return new Event(kind, at.toLocalTime(), at, segment, null);
+    return new Event(kind, at.toLocalTime(), at, segment, null, null);
   }
 
   private static int group(Event event) {
@@ -127,6 +143,7 @@ public final class ItineraryBuilder {
       case CHECK_OUT -> 0;
       case SEGMENT, SEGMENT_DEPARTURE, SEGMENT_ARRIVAL -> 1;
       case CHECK_IN -> 2;
+      case ACTIVITY -> event.time() == null ? 3 : 1;
     };
   }
 
@@ -154,6 +171,20 @@ public final class ItineraryBuilder {
     boolean withinStops =
         firstArrival != null && !date.isBefore(firstArrival) && date.isBefore(lastDeparture);
     return new Overnight(withinStops ? OvernightKind.MISSING : OvernightKind.HOME, null, null);
+  }
+
+  /**
+   * Atividades fora dos dias da timeline (ex.: as datas da viagem mudaram depois), para a tela
+   * mostrá-las à parte em vez de sumirem.
+   */
+  public static List<ActivityEntry> outside(TripSnapshot snapshot, List<ItineraryDay> days) {
+    var dates = days.stream().map(ItineraryDay::date).collect(java.util.stream.Collectors.toSet());
+    return snapshot.activities().stream()
+        .filter(a -> !dates.contains(a.details().day()))
+        .sorted(
+            Comparator.comparing((ActivityEntry a) -> a.details().day())
+                .thenComparingInt(ActivityEntry::sortOrder))
+        .toList();
   }
 
   /** Sem data de fim: a última data do roteiro (saída de parada ou ponta de trecho). */

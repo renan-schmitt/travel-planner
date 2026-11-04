@@ -1,4 +1,21 @@
-import { ArrowDown, ArrowUp, BedDouble, House, MapPinPlus, Route, Search, Star } from 'lucide-react'
+import {
+  closestCenter,
+  DndContext,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { BedDouble, GripVertical, House, MapPinPlus, Route, Search, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
@@ -12,6 +29,7 @@ import { hasRole, type Trip } from '@/features/trips/api'
 import { countryFlag } from '@/lib/countries'
 import { formatDateRange } from '@/lib/dates'
 import { timeZoneLabel } from '@/lib/timezones'
+import { cn } from '@/lib/utils'
 import {
   useLodgings,
   useReorderStops,
@@ -33,7 +51,8 @@ import { StopSheet } from './StopSheet'
  * Aba "Roteiro": paradas na ordem da viagem, cada uma com as suas hospedagens, e os trechos de
  * transporte intercalados (casa → ✈ → Lisboa → 🚆 → Porto → ✈ → casa). Os trechos que saem de casa vêm antes da primeira parada; os
  * locais e os que saem de uma parada, logo abaixo dela. Editor adiciona/edita em bottom sheet e
- * reordena as paradas com ↑/↓ (o drag-and-drop chega na Fase 18). Leitor só vê o roteiro.
+ * reordena as paradas arrastando o puxador (toque longo no celular) ou com as setas ↑/↓ nele.
+ * Leitor só vê o roteiro.
  */
 export function ItineraryTab({ trip }: { trip: Trip }) {
   const { t } = useTranslation()
@@ -68,11 +87,28 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
       </div>
     )
 
-  function move(stop: Stop, index: number, delta: -1 | 1) {
-    if (!stops) return
-    const ids = stops.map((s) => s.id).filter((id) => id !== stop.id)
-    ids.splice(index + delta, 0, stop.id)
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    // Toque longo: o arrasto rápido continua rolando a página.
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+
+  function reorderTo(from: number, to: number) {
+    if (!stops || from === to || to < 0 || to >= stops.length || reorder.isPending) return
+    const ids = arrayMove(
+      stops.map((s) => s.id),
+      from,
+      to,
+    )
     reorder.mutate(ids, { onError: () => toast.error(t('stops.reorderError')) })
+  }
+
+  function onDragEnd({ active, over }: DragEndEvent) {
+    if (!stops || !over) return
+    reorderTo(
+      stops.findIndex((s) => s.id === active.id),
+      stops.findIndex((s) => s.id === over.id),
+    )
   }
 
   return (
@@ -92,65 +128,61 @@ export function ItineraryTab({ trip }: { trip: Trip }) {
           </div>
         )}
         {stops && stops.length > 0 && (
-          <ol aria-label={t('stops.title')} className="flex flex-col divide-y">
-            {stops.map((stop, i) => (
-              <li key={stop.id} className="py-2">
-                <div className="flex items-center gap-2 py-1">
-                  {canEdit ? (
-                    <button
-                      type="button"
-                      className="-mx-2 min-w-0 flex-1 rounded-lg px-2 py-1 text-left hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                      aria-label={t('stops.editStop', { city: stop.cityName })}
-                      onClick={() => setEditing(stop)}
-                    >
-                      <StopSummary stop={stop} />
-                    </button>
-                  ) : (
-                    <div className="min-w-0 flex-1">
-                      <StopSummary stop={stop} />
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={onDragEnd}
+          >
+            <SortableContext items={stops.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+              <ol aria-label={t('stops.title')} className="flex flex-col divide-y">
+                {stops.map((stop, i) => (
+                  <SortableStop
+                    key={stop.id}
+                    stop={stop}
+                    draggable={canEdit && stops.length > 1}
+                    onMove={(delta) => reorderTo(i, i + delta)}
+                  >
+                    <div className="flex items-center gap-2 py-1">
+                      {canEdit ? (
+                        <button
+                          type="button"
+                          className="-mx-2 min-w-0 flex-1 rounded-lg px-2 py-1 text-left hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                          aria-label={t('stops.editStop', { city: stop.cityName })}
+                          onClick={() => setEditing(stop)}
+                        >
+                          <StopSummary stop={stop} />
+                        </button>
+                      ) : (
+                        <div className="min-w-0 flex-1">
+                          <StopSummary stop={stop} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {canEdit && stops.length > 1 && (
-                    <div className="flex shrink-0 flex-col">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={i === 0 || reorder.isPending}
-                        aria-label={t('stops.moveUp', { city: stop.cityName })}
-                        onClick={() => move(stop, i, -1)}
-                      >
-                        <ArrowUp strokeWidth={1.75} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={i === stops.length - 1 || reorder.isPending}
-                        aria-label={t('stops.moveDown', { city: stop.cityName })}
-                        onClick={() => move(stop, i, 1)}
-                      >
-                        <ArrowDown strokeWidth={1.75} />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <StopPlacesLink
-                  tripId={trip.id}
-                  stop={stop}
-                  count={savedPlaces.filter((p) => p.stopId === stop.id).length}
-                />
-                <StopLodgings
-                  tripId={trip.id}
-                  stop={stop}
-                  lodgings={lodgings.filter((l) => l.stopId === stop.id)}
-                  onAdd={canEdit ? () => setEditingLodging({ stop }) : undefined}
-                  onEdit={canEdit ? (lodging) => setEditingLodging({ stop, lodging }) : undefined}
-                />
-                {segmentRows(
-                  segments.filter((s) => s.originStopId === stop.id || s.localStopId === stop.id),
-                )}
-              </li>
-            ))}
-          </ol>
+                    <StopPlacesLink
+                      tripId={trip.id}
+                      stop={stop}
+                      count={savedPlaces.filter((p) => p.stopId === stop.id).length}
+                    />
+                    <StopLodgings
+                      tripId={trip.id}
+                      stop={stop}
+                      lodgings={lodgings.filter((l) => l.stopId === stop.id)}
+                      onAdd={canEdit ? () => setEditingLodging({ stop }) : undefined}
+                      onEdit={
+                        canEdit ? (lodging) => setEditingLodging({ stop, lodging }) : undefined
+                      }
+                    />
+                    {segmentRows(
+                      segments.filter(
+                        (s) => s.originStopId === stop.id || s.localStopId === stop.id,
+                      ),
+                    )}
+                  </SortableStop>
+                ))}
+              </ol>
+            </SortableContext>
+          </DndContext>
         )}
         {stops && stops.length > 0 && toHome && <HomeNode name={homeName} />}
         {canEdit && stops && (
@@ -336,6 +368,66 @@ function SegmentRow({
     >
       <SegmentSummary segment={segment} stops={stops} />
     </button>
+  )
+}
+
+/**
+ * Parada arrastável pelo puxador à direita do cabeçalho (só para editor com 2+ paradas). As setas
+ * ↑/↓ no puxador movem uma posição.
+ */
+function SortableStop({
+  stop,
+  draggable,
+  onMove,
+  children,
+}: {
+  stop: Stop
+  draggable: boolean
+  onMove: (delta: -1 | 1) => void
+  children: React.ReactNode
+}) {
+  const { t } = useTranslation()
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: stop.id, disabled: !draggable })
+  return (
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={cn(
+        'relative bg-card py-2',
+        draggable && 'pr-12',
+        isDragging && 'z-10 rounded-lg shadow-lg',
+      )}
+    >
+      {children}
+      {draggable && (
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          aria-roledescription={undefined}
+          aria-describedby={undefined}
+          aria-label={t('stops.dragHandle', { city: stop.cityName })}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault()
+              onMove(e.key === 'ArrowUp' ? -1 : 1)
+            }
+          }}
+          className="absolute top-3 right-0 flex size-11 cursor-grab touch-manipulation items-center justify-center rounded-lg text-muted-foreground select-none [-webkit-touch-callout:none] hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none active:cursor-grabbing"
+        >
+          <GripVertical className="size-5" aria-hidden />
+        </button>
+      )}
+    </li>
   )
 }
 

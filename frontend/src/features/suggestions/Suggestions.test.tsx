@@ -307,6 +307,7 @@ describe('Aba Sugestões', () => {
               gap: true,
             },
           ],
+          outsideActivities: [],
         }),
       ),
     )

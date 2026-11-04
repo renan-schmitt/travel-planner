@@ -5,9 +5,11 @@ import com.travelplanner.itinerary.domain.ItineraryEventKind;
 import com.travelplanner.itinerary.domain.ItineraryService.Itinerary;
 import com.travelplanner.itinerary.domain.LodgingKind;
 import com.travelplanner.itinerary.domain.OvernightKind;
+import com.travelplanner.itinerary.domain.SavedPlaceKind;
 import com.travelplanner.itinerary.domain.SegmentDetails;
 import com.travelplanner.itinerary.domain.TransportType;
 import com.travelplanner.itinerary.domain.TripSnapshot;
+import com.travelplanner.itinerary.domain.TripSnapshot.ActivityEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.LodgingEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.SegmentEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
@@ -18,8 +20,13 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/** Timeline dia a dia da viagem (vazia enquanto a viagem não tem datas). */
-public record ItineraryResponse(@NotNull List<ItineraryDayResponse> days) {
+/**
+ * Timeline dia a dia da viagem (vazia enquanto a viagem não tem datas). {@code outsideActivities}:
+ * atividades de dias que não estão mais na viagem (as datas mudaram depois).
+ */
+public record ItineraryResponse(
+    @NotNull List<ItineraryDayResponse> days,
+    @NotNull List<ItineraryActivityResponse> outsideActivities) {
 
   private static final DateTimeFormatter HOUR = DateTimeFormatter.ofPattern("HH:mm");
 
@@ -51,7 +58,30 @@ public record ItineraryResponse(@NotNull List<ItineraryDayResponse> days) {
       String time,
       OffsetDateTime instant,
       ItinerarySegmentResponse segment,
-      ItineraryLodgingResponse lodging) {}
+      ItineraryLodgingResponse lodging,
+      ItineraryActivityResponse activity) {}
+
+  /**
+   * Atividade, com tudo o que a tela precisa para editar (inclusive {@code version}). {@code
+   * savedPlace}: o favorito ligado (nulo sem vínculo).
+   */
+  public record ItineraryActivityResponse(
+      @NotNull Long id,
+      @NotNull LocalDate day,
+      String startTime,
+      String endTime,
+      @NotNull String title,
+      String notes,
+      ItinerarySavedPlaceResponse savedPlace,
+      @NotNull Integer sortOrder,
+      @NotNull Long version) {}
+
+  public record ItinerarySavedPlaceResponse(
+      @NotNull Long id,
+      @NotNull Long stopId,
+      @NotNull String placeId,
+      @NotNull String name,
+      @NotNull SavedPlaceKind kind) {}
 
   /**
    * Trecho resumido. {@code origin}/{@code destination}: rótulo digitado ou cidade da parada; nulo
@@ -89,7 +119,9 @@ public record ItineraryResponse(@NotNull List<ItineraryDayResponse> days) {
 
   static ItineraryResponse from(Itinerary itinerary) {
     TripSnapshot snapshot = itinerary.snapshot();
-    return new ItineraryResponse(itinerary.days().stream().map(day -> day(snapshot, day)).toList());
+    return new ItineraryResponse(
+        itinerary.days().stream().map(day -> day(snapshot, day)).toList(),
+        itinerary.outside().stream().map(a -> activity(snapshot, a)).toList());
   }
 
   private static ItineraryDayResponse day(TripSnapshot snapshot, ItineraryDay day) {
@@ -104,7 +136,8 @@ public record ItineraryResponse(@NotNull List<ItineraryDayResponse> days) {
                         e.time() == null ? null : HOUR.format(e.time()),
                         e.at() == null ? null : e.at().toOffsetDateTime(),
                         segment(snapshot, e.segment()),
-                        lodging(e.lodging())))
+                        lodging(e.lodging()),
+                        activity(snapshot, e.activity())))
             .toList(),
         new OvernightResponse(
             day.overnight().kind(),
@@ -145,6 +178,29 @@ public record ItineraryResponse(@NotNull List<ItineraryDayResponse> days) {
       return label;
     }
     return snapshot.stop(stopId).map(s -> s.details().cityName()).orElse(null);
+  }
+
+  private static ItineraryActivityResponse activity(TripSnapshot snapshot, ActivityEntry activity) {
+    if (activity == null) {
+      return null;
+    }
+    var d = activity.details();
+    return new ItineraryActivityResponse(
+        activity.id(),
+        d.day(),
+        ActivityResponse.hour(d.startTime()),
+        ActivityResponse.hour(d.endTime()),
+        d.title(),
+        d.notes(),
+        snapshot
+            .savedPlace(d.savedPlaceId())
+            .map(
+                p ->
+                    new ItinerarySavedPlaceResponse(
+                        p.id(), p.stopId(), p.placeId(), p.name(), p.kind()))
+            .orElse(null),
+        activity.sortOrder(),
+        activity.version());
   }
 
   private static ItineraryLodgingResponse lodging(LodgingEntry lodging) {

@@ -192,7 +192,7 @@ describe('Aba Roteiro', () => {
     })
   })
 
-  it('reordena com os botões ↑/↓', async () => {
+  it('reordena pelo puxador com as setas do teclado', async () => {
     const orders: number[][] = []
     server.use(
       tripDetail(),
@@ -205,8 +205,11 @@ describe('Aba Roteiro', () => {
     )
     const { user } = await openItinerary()
 
-    expect(await screen.findByRole('button', { name: 'Subir Lisboa' })).toBeDisabled()
-    await user.click(screen.getByRole('button', { name: 'Descer Lisboa' }))
+    const handle = await screen.findByRole('button', { name: /^Mover Lisboa/ })
+    handle.focus()
+    // Lisboa já é a primeira: ↑ não faz nada.
+    await user.keyboard('{ArrowUp}')
+    await user.keyboard('{ArrowDown}')
 
     await waitFor(() => expect(orders).toEqual([[2, 1]]))
     await waitFor(async () => expect((await stopItems())[0]).toHaveTextContent('Porto'))
@@ -237,8 +240,6 @@ describe('Aba Roteiro', () => {
 
     expect(await stopItems()).toHaveLength(2)
     expect(screen.queryByRole('button', { name: 'Adicionar parada' })).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /Subir|Descer|Editar parada/ }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Mover|Editar parada/ })).not.toBeInTheDocument()
   })
 })

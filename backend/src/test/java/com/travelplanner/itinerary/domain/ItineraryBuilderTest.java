@@ -1,5 +1,6 @@
 package com.travelplanner.itinerary.domain;
 
+import static com.travelplanner.itinerary.domain.ItineraryEventKind.ACTIVITY;
 import static com.travelplanner.itinerary.domain.ItineraryEventKind.CHECK_IN;
 import static com.travelplanner.itinerary.domain.ItineraryEventKind.CHECK_OUT;
 import static com.travelplanner.itinerary.domain.ItineraryEventKind.SEGMENT;
@@ -7,6 +8,7 @@ import static com.travelplanner.itinerary.domain.ItineraryEventKind.SEGMENT_ARRI
 import static com.travelplanner.itinerary.domain.ItineraryEventKind.SEGMENT_DEPARTURE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.travelplanner.itinerary.domain.TripSnapshot.ActivityEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.LodgingEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.SegmentEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
@@ -25,6 +27,7 @@ class ItineraryBuilderTest {
   private final List<StopEntry> stops = new ArrayList<>();
   private final List<SegmentEntry> segments = new ArrayList<>();
   private final List<LodgingEntry> lodgings = new ArrayList<>();
+  private final List<ActivityEntry> activities = new ArrayList<>();
 
   private StopEntry stop(long id, String city, String arrival, String departure) {
     StopEntry stop =
@@ -96,17 +99,36 @@ class ItineraryBuilderTest {
     return lodging;
   }
 
+  private void activity(long id, String day, String start, int sortOrder) {
+    activities.add(
+        new ActivityEntry(
+            id,
+            sortOrder,
+            0,
+            new ActivityDetails(
+                LocalDate.parse(day),
+                start == null ? null : LocalTime.parse(start),
+                null,
+                "Atividade " + id,
+                null,
+                null)));
+  }
+
   private List<ItineraryDay> build(String start, String end) {
-    return ItineraryBuilder.build(
-        new TripSnapshot(
-            new TripSnapshot.TripInfo(
-                1, "Portugal", parse(start), end == null ? null : LocalDate.parse(end)),
-            new TripSnapshot.Owner(1, "BR", null),
-            stops,
-            segments,
-            lodgings,
-            List.of(),
-            List.of()));
+    return ItineraryBuilder.build(snapshot(start, end));
+  }
+
+  private TripSnapshot snapshot(String start, String end) {
+    return new TripSnapshot(
+        new TripSnapshot.TripInfo(
+            1, "Portugal", parse(start), end == null ? null : LocalDate.parse(end)),
+        new TripSnapshot.Owner(1, "BR", null),
+        stops,
+        segments,
+        lodgings,
+        List.of(),
+        List.of(),
+        activities);
   }
 
   private static LocalDate parse(String date) {
@@ -249,5 +271,31 @@ class ItineraryBuilderTest {
   @Test
   void limitsTheNumberOfDays() {
     assertThat(build("2027-01-01", "2030-01-01")).hasSize(ItineraryBuilder.MAX_DAYS);
+  }
+
+  @Test
+  void activitiesWithTimeInterleaveAndWithoutTimeComeLastInUserOrder() {
+    portugal();
+    activity(1, "2027-03-14", null, 2);
+    activity(2, "2027-03-14", "16:00", 0);
+    activity(3, "2027-03-14", "08:00", 5);
+    activity(4, "2027-03-14", null, 1);
+    activity(5, "2027-03-20", null, 0);
+
+    List<ItineraryDay> days = build("2027-03-10", "2027-03-17");
+    ItineraryDay day = day(days, "2027-03-14");
+
+    // Check-out, 08:00, trem 10:00, 16:00, check-in, sem horário por sortOrder.
+    assertThat(day.events())
+        .extracting(ItineraryDay.Event::kind)
+        .containsExactly(CHECK_OUT, ACTIVITY, SEGMENT, ACTIVITY, CHECK_IN, ACTIVITY, ACTIVITY);
+    assertThat(day.events())
+        .filteredOn(e -> e.kind() == ACTIVITY)
+        .extracting(e -> e.activity().id())
+        .containsExactly(3L, 2L, 4L, 1L);
+    assertThat(day.events().get(1).time()).isEqualTo(LocalTime.of(8, 0));
+    assertThat(ItineraryBuilder.outside(snapshot("2027-03-10", "2027-03-17"), days))
+        .extracting(ActivityEntry::id)
+        .containsExactly(5L);
   }
 }
