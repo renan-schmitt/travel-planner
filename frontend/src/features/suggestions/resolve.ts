@@ -8,11 +8,12 @@ import {
   type Endpoint,
   type SegmentFormValues,
 } from '@/features/itinerary/segment-form'
+import { placesPath } from '@/features/places/places-url'
 import type { Suggestion } from './api'
 import { paramNumber, paramString } from './suggestion-text'
 
 /** Link externo útil para resolver a lacuna (ESP §6.4). */
-export type ExternalLink = { key: 'uber' | 'bookingTaxi'; href: string }
+export type ExternalLink = { key: 'uber' | 'bookingTaxi' | 'resortPage'; href: string }
 
 const TRANSFER_LINKS: ExternalLink[] = [
   { key: 'uber', href: 'https://m.uber.com/' },
@@ -128,16 +129,44 @@ export function resolutionOf(suggestion: Suggestion, stops: Stop[], homeTz: stri
 }
 
 export function externalLinksOf(suggestion: Suggestion): ExternalLink[] {
-  return suggestion.ruleCode === 'TRANSFER_CHEGADA' || suggestion.ruleCode === 'TRANSFER_SAIDA'
-    ? TRANSFER_LINKS
-    : []
+  if (suggestion.ruleCode === 'TRANSFER_CHEGADA' || suggestion.ruleCode === 'TRANSFER_SAIDA') {
+    return TRANSFER_LINKS
+  }
+  if (suggestion.ruleCode === 'RESORT_OPCOES') {
+    // A página do lugar no Maps mostra o site e as reservas do resort.
+    const placeId = paramString(suggestion, 'placeId')
+    const name = paramString(suggestion, 'name') ?? ''
+    const query = [name, paramString(suggestion, 'city')].filter(Boolean).join(' ')
+    const params = new URLSearchParams({ api: '1', query })
+    if (placeId) params.set('query_place_id', placeId)
+    return [{ key: 'resortPage', href: `https://www.google.com/maps/search/?${params.toString()}` }]
+  }
+  return []
 }
 
-/** Busca de hotéis da parada da noite sem hospedagem (ação extra ao lado de "Resolver"). */
-export function hotelSearchOf(suggestion: Suggestion, tripId: number): string | undefined {
-  if (suggestion.ruleCode !== 'NOITE_SEM_HOSPEDAGEM') return undefined
+/** Ação extra ao lado de "Resolver": uma tela de busca do sistema. */
+export type SearchLink = {
+  to: string
+  label: 'searchHotels' | 'discoverRestaurants' | 'discoverAttractions'
+}
+
+/**
+ * Busca de hotéis da parada da noite sem hospedagem; "Descobrir" restaurantes/atrações da parada
+ * sem favoritos.
+ */
+export function searchLinkOf(suggestion: Suggestion, tripId: number): SearchLink | undefined {
   const stopId = paramNumber(suggestion, 'stopId')
-  return stopId === undefined ? undefined : `/trips/${tripId}/stops/${stopId}/hotels`
+  if (stopId === undefined) return undefined
+  switch (suggestion.ruleCode) {
+    case 'NOITE_SEM_HOSPEDAGEM':
+      return { to: `/trips/${tripId}/stops/${stopId}/hotels`, label: 'searchHotels' }
+    case 'RESTAURANTES':
+      return { to: placesPath(tripId, stopId, 'RESTAURANT', true), label: 'discoverRestaurants' }
+    case 'ATRACOES':
+      return { to: placesPath(tripId, stopId, 'ATTRACTION', true), label: 'discoverAttractions' }
+    default:
+      return undefined
+  }
 }
 
 /** Chave de foco usada na URL (`?focus=`) para destacar uma sugestão. */

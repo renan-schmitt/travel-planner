@@ -22,6 +22,13 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 })
 
+// jsdom não implementa ResizeObserver (o Checkbox do Radix dentro de um <form> mede o controle).
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   server.resetHandlers()

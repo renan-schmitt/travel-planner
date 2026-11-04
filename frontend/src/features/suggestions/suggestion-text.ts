@@ -119,6 +119,22 @@ export function suggestionText(
             ? t('suggestions.rules.SEGURO_VIAGEM.descriptionSchengen')
             : t('suggestions.rules.SEGURO_VIAGEM.description'),
       }
+    case 'RESTAURANTES':
+    case 'ATRACOES':
+      return {
+        title: t(`suggestions.rules.${s.ruleCode}.title`, { city: str(p, 'city') }),
+        description: t(`suggestions.rules.${s.ruleCode}.description`, {
+          count: num(p, 'nights') ?? 1,
+        }),
+      }
+    case 'RESORT_OPCOES':
+      return {
+        title: t('suggestions.rules.RESORT_OPCOES.title', { name: str(p, 'name') }),
+        description:
+          p.allInclusive === true
+            ? t('suggestions.rules.RESORT_OPCOES.descriptionAllInclusive')
+            : t('suggestions.rules.RESORT_OPCOES.description'),
+      }
     default:
       return { title: t('suggestions.unknown'), description: '' }
   }

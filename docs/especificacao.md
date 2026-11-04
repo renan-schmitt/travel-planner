@@ -52,7 +52,8 @@ Um sistema web, pensado primeiro para o celular, para planejar viagens em famíl
 - **Termos de uso:** o Google **não permite guardar o conteúdo** do Places por tempo indefinido. É permitido guardar o `place_id`, então o sistema armazena o `place_id` + dados do usuário (favorito, notas, faixa de preço ajustada) e busca os detalhes sob demanda, com cache curto.
 
 ### 3.2 Restaurantes e locais turísticos
-- **Google Places API**: `restaurant`, `tourist_attraction`, `museum`, `beach`, etc., por proximidade do hotel ou da cidade. A mesma escala `$`–`$$$$` vale para restaurantes.
+- **Google Places API**: `restaurant`, `tourist_attraction`, `museum`, `beach`, etc., por proximidade do hotel ou da cidade (Nearby Search por popularidade; raio de 5 km para restaurantes e 10 km para atrações). A mesma escala `$`–`$$$$` vale para restaurantes, com heurística própria sem `priceLevel` (fast-food/praça de alimentação = `$`, alta gastronomia = `$$$$`). Nota mínima e faixa são filtradas pelo sistema (o Nearby não filtra por nota).
+- **Favoritos:** guardam só o `place_id`, o nome do momento em que foram salvos e dados do usuário (tipo, faixa, notas, visitado); nota e posição vêm do Places sob demanda (cache de 24 h).
 - **Complemento gratuito opcional:** OpenStreetMap/Overpass (sem avaliações, mas sem custo nem quota de cobrança).
 - **IA (opcional)** para curar: "dos 20 restaurantes retornados, quais 5 combinam com uma família com crianças?". A IA ordena e explica, mas os dados vêm do Places (assim evita-se inventar lugares).
 
@@ -158,7 +159,7 @@ Roda sempre que a viagem é alterada (e diariamente via cron, para regras de pra
 | `CHECKIN_ONLINE` | Voo em < 48h | "Fazer check-in online" |
 | `SEGURO_VIAGEM` | Viagem internacional sem item de seguro | Sugerir (obrigatório em Schengen) |
 | `RESTAURANTES` / `ATRACOES` | Destino sem nenhum favorito | Sugestões do Places |
-| `RESORT_OPCOES` | Hospedagem all-inclusive/resort | "Ver restaurantes à la carte/reservas do resort" |
+| `RESORT_OPCOES` | Hospedagem all-inclusive/resort | "Ver restaurantes à la carte/reservas do resort" e link para a página do lugar no Maps (que mostra o site e as reservas) |
 
 - Sugestões podem ser **aceitas** (viram item/entidade), **adiadas** ou **dispensadas** (não reaparecem).
 - Cada regra com testes unitários próprios. Novas regras entram sem mexer nas existentes.

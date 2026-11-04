@@ -2,10 +2,13 @@ package com.travelplanner.places.infra;
 
 import com.travelplanner.places.domain.CitySuggestion;
 import com.travelplanner.places.domain.LodgingPage;
-import com.travelplanner.places.domain.LodgingPlace;
 import com.travelplanner.places.domain.LodgingQuery;
 import com.travelplanner.places.domain.LodgingType;
+import com.travelplanner.places.domain.NearbyKind;
+import com.travelplanner.places.domain.NearbyQuery;
 import com.travelplanner.places.domain.PlaceCity;
+import com.travelplanner.places.domain.PlaceInfo;
+import com.travelplanner.places.domain.PlaceResult;
 import com.travelplanner.places.domain.PlaceSummary;
 import com.travelplanner.places.domain.PlacesClient;
 import com.travelplanner.places.domain.PriceTierMapper;
@@ -49,7 +52,17 @@ class GooglePlacesClient implements PlacesClient {
           + "places.userRatingCount,places.priceLevel,places.primaryType,places.photos,"
           + "places.websiteUri,places.googleMapsUri,nextPageToken";
 
+  /** Como a da hospedagem, sem {@code websiteUri} e sem paginação (o Nearby não pagina). */
+  static final String NEARBY_FIELD_MASK =
+      "places.id,places.displayName,places.formattedAddress,places.location,places.rating,"
+          + "places.userRatingCount,places.priceLevel,places.primaryType,places.photos,"
+          + "places.googleMapsUri";
+
   static final String SUMMARY_FIELD_MASK = "id,displayName,formattedAddress";
+
+  static final String INFO_FIELD_MASK = "id,location,rating,userRatingCount,googleMapsUri";
+
+  static final int NEARBY_MAX_RESULTS = 20;
 
   /** Raio do {@code locationBias} da busca de hospedagem, em metros. */
   static final double LODGING_RADIUS_M = 15_000;
@@ -186,12 +199,12 @@ class GooglePlacesClient implements PlacesClient {
     if (response == null) {
       return new LodgingPage(List.of(), null);
     }
-    List<LodgingPlace> places =
+    List<PlaceResult> places =
         response.places() == null
             ? List.of()
             : response.places().stream()
                 .filter(p -> p.id() != null)
-                .map(GooglePlacesClient::toLodging)
+                .map(GooglePlacesClient::toResult)
                 .toList();
     String next =
         response.nextPageToken() == null || response.nextPageToken().isBlank()
@@ -203,13 +216,108 @@ class GooglePlacesClient implements PlacesClient {
   /** "hotels in Lisboa, Portugal" (ou "resorts in …"); o nome do país vai em inglês. */
   static String lodgingText(LodgingQuery query) {
     String noun = query.type() == LodgingType.RESORT ? "resorts" : "hotels";
+    return inCity(noun, query.city(), query.countryCode());
+  }
+
+  /** "&lt;noun&gt; in Lisboa, Portugal"; o nome do país vai em inglês. */
+  static String inCity(String noun, String city, String countryCode) {
     String country =
-        query.countryCode() == null
-            ? ""
-            : Locale.of("", query.countryCode()).getDisplayCountry(Locale.ENGLISH);
+        countryCode == null ? "" : Locale.of("", countryCode).getDisplayCountry(Locale.ENGLISH);
     return country.isBlank()
-        ? "%s in %s".formatted(noun, query.city())
-        : "%s in %s, %s".formatted(noun, query.city(), country);
+        ? "%s in %s".formatted(noun, city)
+        : "%s in %s, %s".formatted(noun, city, country);
+  }
+
+  @Override
+  public List<PlaceResult> searchNearby(NearbyQuery query, String languageCode) {
+    requireConfigured();
+    Map<String, Object> body = new LinkedHashMap<>();
+    SearchTextResponse response;
+    if (query.hasCenter()) {
+      body.put("includedTypes", query.kind().includedTypes());
+      body.put("maxResultCount", NEARBY_MAX_RESULTS);
+      body.put(
+          "locationRestriction",
+          Map.of(
+              "circle",
+              Map.of(
+                  "center",
+                  Map.of("latitude", query.lat(), "longitude", query.lng()),
+                  "radius",
+                  query.kind().radiusMeters())));
+      body.put("rankPreference", "POPULARITY");
+      body.put("languageCode", languageCode);
+      response =
+          call(
+              "searchNearby",
+              () ->
+                  http.post()
+                      .uri("/places:searchNearby")
+                      .header("X-Goog-FieldMask", NEARBY_FIELD_MASK)
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .body(body)
+                      .retrieve()
+                      .body(SearchTextResponse.class));
+    } else {
+      // Parada digitada à mão (sem coordenadas): o Nearby exige um centro.
+      body.put("textQuery", inCity(query.kind().textNoun(), query.city(), query.countryCode()));
+      if (query.kind() == NearbyKind.RESTAURANT) {
+        body.put("includedType", "restaurant");
+      }
+      body.put("languageCode", languageCode);
+      body.put("pageSize", NEARBY_MAX_RESULTS);
+      response =
+          call(
+              "searchText",
+              () ->
+                  http.post()
+                      .uri("/places:searchText")
+                      .header("X-Goog-FieldMask", NEARBY_FIELD_MASK)
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .body(body)
+                      .retrieve()
+                      .body(SearchTextResponse.class));
+    }
+    if (response == null || response.places() == null) {
+      return List.of();
+    }
+    return response.places().stream()
+        .filter(p -> p.id() != null)
+        .map(GooglePlacesClient::toResult)
+        .toList();
+  }
+
+  @Override
+  public PlaceInfo getPlaceInfo(String placeId, String languageCode) {
+    requireConfigured();
+    InfoDetails details;
+    try {
+      details =
+          call(
+              "details",
+              () ->
+                  http.get()
+                      .uri(
+                          uri ->
+                              uri.path("/places/{placeId}")
+                                  .queryParam("languageCode", languageCode)
+                                  .build(placeId))
+                      .header("X-Goog-FieldMask", INFO_FIELD_MASK)
+                      .retrieve()
+                      .body(InfoDetails.class));
+    } catch (PlaceNotFound e) {
+      throw new NotFoundException("Lugar não encontrado.");
+    }
+    if (details == null) {
+      throw new NotFoundException("Lugar não encontrado.");
+    }
+    return new PlaceInfo(
+        Objects.requireNonNullElse(details.id(), placeId),
+        details.rating(),
+        details.userRatingCount(),
+        details.location() != null ? details.location().latitude() : null,
+        details.location() != null ? details.location().longitude() : null,
+        details.googleMapsUri());
   }
 
   @Override
@@ -269,7 +377,7 @@ class GooglePlacesClient implements PlacesClient {
     return media.photoUri();
   }
 
-  private static LodgingPlace toLodging(SearchPlace p) {
+  private static PlaceResult toResult(SearchPlace p) {
     String photo =
         p.photos() == null
             ? null
@@ -279,7 +387,7 @@ class GooglePlacesClient implements PlacesClient {
                 .findFirst()
                 .orElse(null);
     String name = text(p.displayName());
-    return new LodgingPlace(
+    return new PlaceResult(
         p.id(),
         name != null ? name : p.formattedAddress(),
         p.formattedAddress(),
@@ -370,6 +478,9 @@ class GooglePlacesClient implements PlacesClient {
       List<AddressComponent> addressComponents) {}
 
   record LatLng(double latitude, double longitude) {}
+
+  record InfoDetails(
+      String id, LatLng location, Double rating, Integer userRatingCount, String googleMapsUri) {}
 
   record AddressComponent(String longText, String shortText, List<String> types) {}
 

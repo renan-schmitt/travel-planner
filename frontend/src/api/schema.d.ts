@@ -228,6 +228,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}/saved-places': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listSavedPlaces']
+    put?: never
+    post: operations['createSavedPlace']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/stops/{stopId}/lodgings': {
     parameters: {
       query?: never
@@ -404,6 +420,22 @@ export interface paths {
     patch: operations['updateSuggestion']
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}/saved-places/{savedPlaceId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    delete: operations['deleteSavedPlace']
+    options?: never
+    head?: never
+    patch: operations['updateSavedPlace']
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/checklist/{itemId}/status': {
     parameters: {
       query?: never
@@ -452,6 +484,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/stops/{stopId}/places-search': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['searchPlaces']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/trips/{tripId}/stops/{stopId}/lodging-search': {
     parameters: {
       query?: never
@@ -460,6 +508,22 @@ export interface paths {
       cookie?: never
     }
     get: operations['searchLodging']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/saved-places': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listTripSavedPlaces']
     put?: never
     post?: never
     delete?: never
@@ -949,6 +1013,42 @@ export interface components {
       departureDate: string
       notes?: string
     }
+    SavedPlaceRequest: {
+      placeId: string
+      /** @enum {string} */
+      kind: 'RESTAURANT' | 'ATTRACTION' | 'OTHER'
+      name?: string
+      /** Format: int32 */
+      priceTier?: number
+      notes?: string
+    }
+    SavedPlaceResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: int64 */
+      stopId: number
+      placeId: string
+      name: string
+      /** @enum {string} */
+      kind: 'RESTAURANT' | 'ATTRACTION' | 'OTHER'
+      /** Format: int32 */
+      priceTier?: number
+      /** @enum {string} */
+      priceTierSource?: 'PLACES' | 'HEURISTIC' | 'AI' | 'USER'
+      notes?: string
+      visited: boolean
+      /** Format: double */
+      rating?: number
+      /** Format: int32 */
+      userRatingCount?: number
+      /** Format: double */
+      lat?: number
+      /** Format: double */
+      lng?: number
+      googleMapsUri?: string
+      /** Format: int64 */
+      version: number
+    }
     LodgingRequest: {
       /** @enum {string} */
       kind: 'HOTEL' | 'RENTAL' | 'FRIENDS_HOME'
@@ -1103,6 +1203,16 @@ export interface components {
       }
       checklist?: components['schemas']['ChecklistSuggestion']
     }
+    UpdateSavedPlaceRequest: {
+      /** Format: int64 */
+      version: number
+      /** @enum {string} */
+      kind: 'RESTAURANT' | 'ATTRACTION' | 'OTHER'
+      /** Format: int32 */
+      priceTier?: number
+      notes?: string
+      visited: boolean
+    }
     ChecklistStatusRequest: {
       /** @enum {string} */
       status: 'OPEN' | 'DONE'
@@ -1148,6 +1258,36 @@ export interface components {
       destinationCount: number
       /** Format: int32 */
       pendingSuggestions: number
+    }
+    PlaceSearchResponse: {
+      results: components['schemas']['PlaceSearchResult'][]
+      /** @enum {string} */
+      center: 'LODGING' | 'CITY' | 'TEXT'
+      /** Format: double */
+      centerLat?: number
+      /** Format: double */
+      centerLng?: number
+      centerLodgingName?: string
+    }
+    PlaceSearchResult: {
+      placeId: string
+      name: string
+      address?: string
+      /** Format: double */
+      lat?: number
+      /** Format: double */
+      lng?: number
+      /** Format: double */
+      rating?: number
+      /** Format: int32 */
+      userRatingCount?: number
+      /** Format: int32 */
+      priceTier?: number
+      /** @enum {string} */
+      priceTierSource?: 'PLACES' | 'HEURISTIC' | 'AI' | 'USER'
+      primaryType?: string
+      photoName?: string
+      googleMapsUri?: string
     }
     LodgingSearchResponse: {
       results: components['schemas']['LodgingSearchResult'][]
@@ -1995,6 +2135,56 @@ export interface operations {
       }
     }
   }
+  listSavedPlaces: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SavedPlaceResponse'][]
+        }
+      }
+    }
+  }
+  createSavedPlace: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SavedPlaceRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SavedPlaceResponse']
+        }
+      }
+    }
+  }
   listLodgings: {
     parameters: {
       query?: never
@@ -2430,6 +2620,56 @@ export interface operations {
       }
     }
   }
+  deleteSavedPlace: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+        savedPlaceId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  updateSavedPlace: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+        savedPlaceId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSavedPlaceRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SavedPlaceResponse']
+        }
+      }
+    }
+  }
   setChecklistItemStatus: {
     parameters: {
       query?: never
@@ -2525,6 +2765,33 @@ export interface operations {
       }
     }
   }
+  searchPlaces: {
+    parameters: {
+      query: {
+        kind: 'RESTAURANT' | 'ATTRACTION'
+        minRating?: number
+        tiers?: number[]
+      }
+      header?: never
+      path: {
+        tripId: number
+        stopId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PlaceSearchResponse']
+        }
+      }
+    }
+  }
   searchLodging: {
     parameters: {
       query?: {
@@ -2549,6 +2816,28 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['LodgingSearchResponse']
+        }
+      }
+    }
+  }
+  listTripSavedPlaces: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SavedPlaceResponse'][]
         }
       }
     }

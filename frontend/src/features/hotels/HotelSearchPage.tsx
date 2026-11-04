@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
+import { Chip, ChipGroup } from '@/components/FilterChips'
 import { PriceTier, type PriceLevel } from '@/components/PriceTier'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -14,7 +15,6 @@ import { useTripTravelers } from '@/features/travelers/api'
 import { hasRole, useTrip, type Trip } from '@/features/trips/api'
 import { ApiError } from '@/lib/api'
 import { formatDateRange } from '@/lib/dates'
-import { cn } from '@/lib/utils'
 import { useHotelSearch, type HotelFilters, type HotelResult, type HotelType } from './api'
 import { HotelCard } from './HotelCard'
 import { asPriceLevel, guestCounts, HOTEL_SORTS, sortHotels, type HotelSort } from './hotel-search'
@@ -213,35 +213,5 @@ function HotelSearch({ trip, stop }: { trip: Trip; stop: Stop }) {
         />
       )}
     </div>
-  )
-}
-
-function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
-      {children}
-    </div>
-  )
-}
-
-function Chip({
-  pressed,
-  className,
-  ...props
-}: React.ComponentProps<typeof Button> & { pressed: boolean }) {
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant={pressed ? 'default' : 'outline'}
-      aria-pressed={pressed}
-      className={cn(
-        'rounded-full',
-        pressed &&
-          '[&_.text-border]:text-primary-foreground/40 [&_.text-foreground]:text-primary-foreground',
-        className,
-      )}
-      {...props}
-    />
   )
 }
