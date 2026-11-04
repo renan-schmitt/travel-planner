@@ -205,7 +205,8 @@ public class TripSnapshotFixtures {
   }
 
   public SavedPlaceEntry savedPlace(StopEntry stop, SavedPlaceKind kind) {
-    SavedPlaceEntry place = new SavedPlaceEntry(nextId++, stop.id(), "place-" + nextId, kind);
+    SavedPlaceEntry place =
+        new SavedPlaceEntry(nextId++, stop.id(), "place-" + nextId, "Lugar " + nextId, kind);
     savedPlaces.add(place);
     return place;
   }
@@ -257,7 +258,8 @@ public class TripSnapshotFixtures {
             .toList(),
         lodgings,
         travelers,
-        savedPlaces);
+        savedPlaces,
+        List.of());
   }
 
   public GapContext context() {

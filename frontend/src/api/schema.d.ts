@@ -148,6 +148,38 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/trips/{tripId}/activities/{activityId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['updateActivity']
+    post?: never
+    delete: operations['deleteActivity']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/activities/reorder': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put: operations['reorderActivities']
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/travelers/{travelerId}': {
     parameters: {
       query?: never
@@ -350,6 +382,22 @@ export interface paths {
     get?: never
     put?: never
     post: operations['applyChecklistTemplate']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/trips/{tripId}/activities': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['listActivities']
+    put?: never
+    post: operations['createActivity']
     delete?: never
     options?: never
     head?: never
@@ -924,6 +972,39 @@ export interface components {
     ReorderChecklistRequest: {
       itemIds: number[]
     }
+    UpdateActivityRequest: {
+      /** Format: int64 */
+      version: number
+      /** Format: date */
+      day: string
+      startTime?: string
+      endTime?: string
+      title?: string
+      notes?: string
+      /** Format: int64 */
+      savedPlaceId?: number
+    }
+    ActivityResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: date */
+      day: string
+      startTime?: string
+      endTime?: string
+      title: string
+      notes?: string
+      /** Format: int64 */
+      savedPlaceId?: number
+      /** Format: int32 */
+      sortOrder: number
+      /** Format: int64 */
+      version: number
+    }
+    ReorderActivitiesRequest: {
+      /** Format: date */
+      day: string
+      activityIds: number[]
+    }
     UpdateTravelerRequest: {
       /** Format: int64 */
       version: number
@@ -1138,6 +1219,16 @@ export interface components {
       /** Format: int32 */
       skipped: number
     }
+    ActivityRequest: {
+      /** Format: date */
+      day: string
+      startTime?: string
+      endTime?: string
+      title?: string
+      notes?: string
+      /** Format: int64 */
+      savedPlaceId?: number
+    }
     TravelerRequest: {
       name: string
       /** @enum {string} */
@@ -1314,6 +1405,21 @@ export interface components {
       websiteUri?: string
       googleMapsUri?: string
     }
+    ItineraryActivityResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: date */
+      day: string
+      startTime?: string
+      endTime?: string
+      title: string
+      notes?: string
+      savedPlace?: components['schemas']['ItinerarySavedPlaceResponse']
+      /** Format: int32 */
+      sortOrder: number
+      /** Format: int64 */
+      version: number
+    }
     ItineraryDayResponse: {
       /** Format: date */
       date: string
@@ -1324,12 +1430,14 @@ export interface components {
     }
     ItineraryEventResponse: {
       /** @enum {string} */
-      kind: 'CHECK_OUT' | 'SEGMENT' | 'SEGMENT_DEPARTURE' | 'SEGMENT_ARRIVAL' | 'CHECK_IN'
+      kind:
+        'CHECK_OUT' | 'SEGMENT' | 'SEGMENT_DEPARTURE' | 'SEGMENT_ARRIVAL' | 'CHECK_IN' | 'ACTIVITY'
       time?: string
       /** Format: date-time */
       instant?: string
       segment?: components['schemas']['ItinerarySegmentResponse']
       lodging?: components['schemas']['ItineraryLodgingResponse']
+      activity?: components['schemas']['ItineraryActivityResponse']
     }
     ItineraryLodgingResponse: {
       /** Format: int64 */
@@ -1347,6 +1455,17 @@ export interface components {
     }
     ItineraryResponse: {
       days: components['schemas']['ItineraryDayResponse'][]
+      outsideActivities: components['schemas']['ItineraryActivityResponse'][]
+    }
+    ItinerarySavedPlaceResponse: {
+      /** Format: int64 */
+      id: number
+      /** Format: int64 */
+      stopId: number
+      placeId: string
+      name: string
+      /** @enum {string} */
+      kind: 'RESTAURANT' | 'ATTRACTION' | 'OTHER'
     }
     ItinerarySegmentResponse: {
       /** Format: int64 */
@@ -1903,6 +2022,80 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['ChecklistItemResponse'][]
+        }
+      }
+    }
+  }
+  updateActivity: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        activityId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateActivityRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ActivityResponse']
+        }
+      }
+    }
+  }
+  deleteActivity: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+        activityId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  reorderActivities: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReorderActivitiesRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ActivityResponse'][]
         }
       }
     }
@@ -2479,6 +2672,54 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['ApplyTemplateResponse']
+        }
+      }
+    }
+  }
+  listActivities: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ActivityResponse'][]
+        }
+      }
+    }
+  }
+  createActivity: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        tripId: number
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ActivityRequest']
+      }
+    }
+    responses: {
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['ActivityResponse']
         }
       }
     }

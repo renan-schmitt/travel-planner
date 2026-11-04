@@ -19,4 +19,10 @@ public interface SavedPlaceRepository extends JpaRepository<SavedPlace, Long> {
       "select p from SavedPlace p where p.stopId in"
           + " (select s.id from Stop s where s.tripId = :tripId) order by p.stopId, p.id")
   List<SavedPlace> findByTripId(Long tripId);
+
+  /** Favorito {@code id} se ele for de uma parada da viagem. */
+  @Query(
+      "select p from SavedPlace p where p.id = :id and p.stopId in"
+          + " (select s.id from Stop s where s.tripId = :tripId)")
+  Optional<SavedPlace> findByIdAndTripId(Long id, Long tripId);
 }

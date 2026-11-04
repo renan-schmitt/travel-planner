@@ -2,6 +2,7 @@ package com.travelplanner.itinerary.domain;
 
 import com.travelplanner.auth.domain.AppUser;
 import com.travelplanner.auth.domain.AppUserService;
+import com.travelplanner.itinerary.infra.ActivityRepository;
 import com.travelplanner.itinerary.infra.LodgingRepository;
 import com.travelplanner.itinerary.infra.SavedPlaceRepository;
 import com.travelplanner.itinerary.infra.StopRepository;
@@ -32,6 +33,7 @@ public class TripSnapshotLoader {
   private final LodgingRepository lodgings;
   private final TravelerRepository travelers;
   private final SavedPlaceRepository savedPlaces;
+  private final ActivityRepository activities;
 
   @Transactional(readOnly = true)
   public TripSnapshot load(long tripId) {
@@ -86,7 +88,13 @@ public class TripSnapshotLoader {
             .map(
                 p ->
                     new TripSnapshot.SavedPlaceEntry(
-                        p.getId(), p.getStopId(), p.getPlaceId(), p.getKind()))
+                        p.getId(), p.getStopId(), p.getPlaceId(), p.getName(), p.getKind()))
+            .toList(),
+        activities.findByTripIdOrderByDayAscSortOrderAscIdAsc(tripId).stream()
+            .map(
+                a ->
+                    new TripSnapshot.ActivityEntry(
+                        a.getId(), a.getSortOrder(), a.getVersion(), a.details()))
             .toList());
   }
 }

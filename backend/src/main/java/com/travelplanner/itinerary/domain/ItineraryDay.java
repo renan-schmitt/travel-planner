@@ -1,5 +1,6 @@
 package com.travelplanner.itinerary.domain;
 
+import com.travelplanner.itinerary.domain.TripSnapshot.ActivityEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.LodgingEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.SegmentEntry;
 import com.travelplanner.itinerary.domain.TripSnapshot.StopEntry;
@@ -26,14 +27,15 @@ public record ItineraryDay(
 
   /**
    * Evento do dia. Trechos têm {@code time} e {@code at} (instante no fuso da ponta); check-in e
-   * check-out não têm horário.
+   * check-out não têm horário; atividades têm {@code time} se tiverem horário de início.
    */
   public record Event(
       ItineraryEventKind kind,
       LocalTime time,
       ZonedDateTime at,
       SegmentEntry segment,
-      LodgingEntry lodging) {}
+      LodgingEntry lodging,
+      ActivityEntry activity) {}
 
   /** Onde se dorme; {@code lodging} em {@code LODGING}, {@code segment} em {@code IN_TRANSIT}. */
   public record Overnight(OvernightKind kind, LodgingEntry lodging, SegmentEntry segment) {}
